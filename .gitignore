@@ -1,0 +1,40 @@
+# ===== Dependencies =====
+node_modules/
+
+# ===== Environment Variables (NEVER COMMIT!) =====
+.env
+.env.local
+.env.production
+.env.development
+.env.*.local
+
+# ===== Frontend (Vite / React) =====
+frontend/dist/
+frontend/.vite/
+
+# ===== Backend (Node / Express) =====
+backend/dist/
+backend/build/
+
+# ===== Logs =====
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ===== OS Generated Files =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# ===== Editor Files =====
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
