@@ -18,6 +18,10 @@ const Post = {
       query = query.eq('post_type', filters.post_type);
     }
 
+    if (filters.author_id) {
+      query = query.eq('author_id', filters.author_id);
+    }
+
     const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {

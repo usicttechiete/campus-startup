@@ -41,9 +41,9 @@ const MoreIcon = ({ className }) => (
 );
 
 const stageColors = {
-  Ideation: 'bg-blue-100 text-blue-700',
-  MVP: 'bg-green-100 text-green-700',
-  Scaling: 'bg-orange-100 text-orange-700',
+  Ideation: 'bg-gray-100 text-gray-600',
+  MVP: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 border border-indigo-100/50',
+  Scaling: 'bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700 border border-teal-100/50',
 };
 
 const PostCard = ({ post, onPostDeleted }) => {
@@ -149,7 +149,18 @@ const PostCard = ({ post, onPostDeleted }) => {
             {role && <span className="text-gray-500 text-xs">@{role.toLowerCase().replace(/\s+/g, '')}</span>}
             <span className="text-gray-400 text-xs">· {publishedTime}</span>
           </div>
-          {college && <p className="text-gray-500 text-xs truncate">{college}</p>}
+          {/* Startup Name • College Name */}
+          <div className="flex items-center gap-1.5 text-xs truncate max-w-full">
+            <span className="font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent shrink-0">
+              {title} 🚀
+            </span>
+            {college && (
+              <>
+                <span className="text-gray-300 shrink-0">•</span>
+                <span className="text-gray-500 truncate min-w-0">{college}</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Stage badge & menu */}
@@ -211,8 +222,8 @@ const PostCard = ({ post, onPostDeleted }) => {
           onClick={handleLike}
           disabled={likeLoading}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isLiked
-              ? 'text-red-500 bg-red-50 hover:bg-red-100'
-              : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
+            ? 'text-red-500 bg-red-50 hover:bg-red-100'
+            : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
             }`}
         >
           <HeartIcon filled={isLiked} className="w-4 h-4" />

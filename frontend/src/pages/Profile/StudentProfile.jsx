@@ -14,6 +14,8 @@ import { formatLevel, formatTrustScore } from '../../utils/formatters.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useRole } from '../../context/RoleContext.jsx';
 import { useOnlineStatus, useAvailability } from '../../hooks/useOnlineStatus.js';
+import { fetchFeed, createFeedPost } from '../../services/feed.api.js';
+import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
   { key: 'about', label: 'About' },
@@ -21,6 +23,29 @@ const tabConfig = [
   { key: 'teams', label: 'Teams Joined' },
   { key: 'events', label: 'Events' },
 ];
+
+const initialFormState = {
+  title: '',
+  description: '',
+  stage: 'Ideation',
+  required_skills: '',
+  post_type: 'project',
+};
+
+// Icons
+const PlusIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const CloseIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
 
 const AnimatedCard = ({ children, className = '', delay = 0, hover = true }) => (
   <motion.div
@@ -147,10 +172,28 @@ const StudentProfile = () => {
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [adminPasswordError, setAdminPasswordError] = useState('');
 
+  // Activity Section States
+  const [activityTab, setActivityTab] = useState('projects'); // 'projects' | 'updates'
+  const [activityPosts, setActivityPosts] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState('');
+
+  // Create Post States
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(initialFormState);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
+
+  const postTypes = [
+    { label: 'Project', value: 'project' },
+    { label: 'Update', value: 'work_update' },
+    { label: 'Idea', value: 'startup_idea' },
+  ];
+
   // Online status and availability hooks
   const { isOnline } = useOnlineStatus(profile?.id);
   const { isAvailable, loading: availabilityLoading, toggleAvailability } = useAvailability(
-    profile?.id, 
+    profile?.id,
     profile?.available_to_work
   );
 
@@ -255,7 +298,29 @@ const StudentProfile = () => {
     };
 
     loadStartup();
+    loadStartup();
   }, [activeTab, role, startupLoadedOnce]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const loadActivity = async () => {
+      setActivityLoading(true);
+      setActivityError('');
+      try {
+        const data = await fetchFeed({ author_id: profile.id });
+        setActivityPosts(data?.results || []);
+      } catch (err) {
+        setActivityError('Failed to load activity');
+        // eslint-disable-next-line no-console
+        console.error(err);
+      } finally {
+        setActivityLoading(false);
+      }
+    };
+
+    loadActivity();
+  }, [profile?.id]);
 
   useEffect(() => {
     if (profile?.name) {
@@ -307,8 +372,23 @@ const StudentProfile = () => {
     if (Array.isArray(profile.events_participated)) return profile.events_participated;
     if (Array.isArray(profile.events_attended_list)) return profile.events_attended_list;
     return [];
+    if (Array.isArray(profile.events_attended_list)) return profile.events_attended_list;
+    return [];
   }, [profile]);
- 
+
+  const { projectsPosted, updatesPosted } = useMemo(() => {
+    const projects = [];
+    const updates = [];
+    activityPosts.forEach((post) => {
+      if (post.post_type === 'project' || post.post_type === 'startup_idea') {
+        projects.push(post);
+      } else if (post.post_type === 'work_update') {
+        updates.push(post);
+      }
+    });
+    return { projectsPosted: projects, updatesPosted: updates };
+  }, [activityPosts]);
+
   const handleAddSkill = () => {
     const trimmed = skillInputValue.trim();
     if (!trimmed) {
@@ -1011,12 +1091,12 @@ const StudentProfile = () => {
     setAdminUpgradeMessage('');
     setAdminUpgradeSuccess(false);
     setError(null);
-    
+
     try {
       const response = await requestAdminUpgrade(password);
       setAdminUpgradeMessage(response.message);
       setAdminUpgradeSuccess(response.success);
-      
+
       if (response.success) {
         // Update the profile with the new role
         setProfile(response.profile);
@@ -1061,6 +1141,51 @@ const StudentProfile = () => {
 
     closeAdminPasswordModal();
     await handleAdminUpgrade(password);
+  };
+
+  // Create Post Handlers
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const postData = {
+        title: form.title,
+        description: form.description,
+        post_type: form.post_type,
+      };
+      if (form.post_type !== 'work_update') {
+        postData.stage = form.stage;
+        postData.required_skills = form.required_skills.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      const newPost = await createFeedPost(postData);
+
+      // Optimistic update
+      setActivityPosts((prev) => [newPost, ...prev]);
+
+      setShowForm(false);
+      setForm(initialFormState);
+
+      // Switch tab to the relevant one
+      if (form.post_type === 'work_update') {
+        setActivityTab('updates');
+      } else {
+        setActivityTab('projects');
+      }
+    } catch (err) {
+      setFormError(err.message || 'Failed to create post');
+    }
+    setFormLoading(false);
+  };
+
+  const getFormTitle = () => {
+    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
+    return types[form.post_type] || 'Create Post';
   };
 
   if (loading) {
@@ -1276,11 +1401,10 @@ const StudentProfile = () => {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${
-                  tab.key === activeTab
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
-                }`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${tab.key === activeTab
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -1303,60 +1427,228 @@ const StudentProfile = () => {
         </Card>
       </AnimatedCard>
 
-      {isAdminPasswordModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: 10 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="w-full max-w-sm"
-          >
-            <Card className="space-y-4 border border-border/60 bg-card p-6 shadow-lg">
-              <div>
-                <h2 className="text-lg font-semibold text-body tracking-tight">Admin verification</h2>
-                <p className="mt-1 text-sm text-muted">To become an admin you must enter the admin only password.</p>
-              </div>
+      {/* Activity Section */}
+      <AnimatedCard delay={0.4}>
+        <Card className="space-y-5 border border-border/60 bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActivityTab('projects')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'projects'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                  }`}
+              >
+                Projects Posted
+              </button>
+              <button
+                type="button"
+                onClick={() => setActivityTab('updates')}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'updates'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                  }`}
+              >
+                Updates Posted
+              </button>
+            </div>
+            {role === 'student' && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-full hover:bg-primary/20 transition active:scale-95"
+              >
+                <PlusIcon className="w-4 h-4" />
+                Add
+              </button>
+            )}
+          </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted">Password</label>
-                <input
-                  type="password"
-                  value={adminPasswordInput}
-                  onChange={(event) => {
-                    setAdminPasswordInput(event.target.value);
-                    setAdminPasswordError('');
-                  }}
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter password"
-                  autoFocus
-                />
-                {adminPasswordError ? <p className="text-xs text-danger">{adminPasswordError}</p> : null}
+          <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm min-h-[200px]">
+            {activityLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader label="Loading activity..." />
               </div>
+            ) : activityError ? (
+              <p className="text-center text-sm text-danger">{activityError}</p>
+            ) : (
+              <div className="space-y-4">
+                {activityTab === 'projects' ? (
+                  projectsPosted.length > 0 ? (
+                    projectsPosted.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onPostDeleted={(deletedId) => {
+                          setActivityPosts((prev) => prev.filter((p) => p.id !== deletedId && p.post_id !== deletedId));
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-sm text-muted py-8">No projects posted yet.</p>
+                  )
+                ) : (
+                  updatesPosted.length > 0 ? (
+                    updatesPosted.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        onPostDeleted={(deletedId) => {
+                          setActivityPosts((prev) => prev.filter((p) => p.id !== deletedId && p.post_id !== deletedId));
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <p className="text-center text-sm text-muted py-8">No updates posted yet.</p>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      </AnimatedCard>
 
+      {
+        isAdminPasswordModalOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="w-full max-w-sm"
+            >
+              <Card className="space-y-4 border border-border/60 bg-card p-6 shadow-lg">
+                <div>
+                  <h2 className="text-lg font-semibold text-body tracking-tight">Admin verification</h2>
+                  <p className="mt-1 text-sm text-muted">To become an admin you must enter the admin only password.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted">Password</label>
+                  <input
+                    type="password"
+                    value={adminPasswordInput}
+                    onChange={(event) => {
+                      setAdminPasswordInput(event.target.value);
+                      setAdminPasswordError('');
+                    }}
+                    className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Enter password"
+                    autoFocus
+                  />
+                  {adminPasswordError ? <p className="text-xs text-danger">{adminPasswordError}</p> : null}
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex-1 rounded-full transition duration-200 hover:bg-surface hover:scale-[1.03] active:scale-[0.97]"
+                    onClick={closeAdminPasswordModal}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    className="flex-1 rounded-full shadow-sm transition duration-200 hover:scale-[1.03] active:scale-[0.97]"
+                    onClick={submitAdminPassword}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          </div>
+        ) : null
+      }
+
+      {/* Create Post Modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
+          <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border/40">
+              <h2 className="text-lg font-bold text-body">{getFormTitle()}</h2>
+              <button onClick={() => setShowForm(false)} className="p-2 rounded-full hover:bg-surface">
+                <CloseIcon className="w-5 h-5 text-muted" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreatePost} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Post Type */}
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="flex-1 rounded-full transition duration-200 hover:bg-surface hover:scale-[1.03] active:scale-[0.97]"
-                  onClick={closeAdminPasswordModal}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  className="flex-1 rounded-full shadow-sm transition duration-200 hover:scale-[1.03] active:scale-[0.97]"
-                  onClick={submitAdminPassword}
-                >
-                  Continue
-                </Button>
+                {postTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, post_type: type.value }))}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${form.post_type === type.value
+                      ? 'bg-primary text-white'
+                      : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                      }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
               </div>
-            </Card>
-          </motion.div>
+
+              {/* Title */}
+              <input
+                name="title"
+                required
+                value={form.title}
+                onChange={handleFormChange}
+                placeholder={form.post_type === 'work_update' ? "What's the update?" : "Project Title"}
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              {/* Description */}
+              <textarea
+                name="description"
+                rows={3}
+                required
+                value={form.description}
+                onChange={handleFormChange}
+                placeholder="Tell us more..."
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm resize-none outline-none focus:ring-2 focus:ring-primary"
+              />
+
+              {/* Stage & Skills */}
+              {form.post_type !== 'work_update' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <select
+                    name="stage"
+                    value={form.stage}
+                    onChange={handleFormChange}
+                    className="rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="Ideation">Ideation</option>
+                    <option value="MVP">MVP</option>
+                    <option value="Scaling">Scaling</option>
+                  </select>
+                  <input
+                    name="required_skills"
+                    value={form.required_skills}
+                    onChange={handleFormChange}
+                    placeholder="Skills (comma sep)"
+                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              )}
+
+              {formError && <p className="text-sm text-danger">{formError}</p>}
+
+              <Button type="submit" variant="primary" className="w-full" disabled={formLoading}>
+                {formLoading ? <Loader size="sm" inline /> : 'Publish'}
+              </Button>
+            </form>
+          </div>
         </div>
-      ) : null}
-    </motion.div>
+      )}
+    </motion.div >
   );
 };
 

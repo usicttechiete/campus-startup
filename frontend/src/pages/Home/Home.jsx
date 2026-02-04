@@ -9,7 +9,6 @@ const JobsSuggestions = lazy(() => import('../../components/JobsSuggestions/Jobs
 const StartupsSuggestions = lazy(() => import('../../components/StartupsSuggestions/StartupsSuggestions.jsx'));
 
 const postTypes = [
-  { label: 'Ideas', value: 'startup_idea' },
   { label: 'Projects', value: 'project' },
   { label: 'Updates', value: 'work_update' },
 ];
@@ -26,7 +25,7 @@ const initialFormState = {
   description: '',
   stage: 'Ideation',
   required_skills: '',
-  post_type: 'startup_idea',
+  post_type: 'project',
 };
 
 // Icons
@@ -68,7 +67,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    loadPosts({ stage: 'all', post_type: 'startup_idea' });
+    loadPosts({ stage: 'all', post_type: 'project' });
   }, []);
 
   const handleFilterChange = (stageValue) => {
@@ -246,7 +245,7 @@ const Home = () => {
 
       {/* Create Post Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
           <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
