@@ -1,42 +1,36 @@
 import clsx from 'clsx';
 
-const sizeMap = {
-  sm: 'h-4 w-4 border-2',
-  md: 'h-6 w-6 border-2',
-  lg: 'h-8 w-8 border-[3px]',
+const sizeStyles = {
+  sm: 'w-4 h-4 border-2',
+  md: 'w-6 h-6 border-2',
+  lg: 'w-8 h-8 border-3',
 };
 
 const Loader = ({ size = 'md', label, inline = false, className }) => {
-  const spinner = (
-    <span
+  return (
+    <div
       className={clsx(
-        'inline-block animate-spin rounded-full border-primary border-t-transparent',
-        sizeMap[size],
-        className,
+        'flex items-center gap-2',
+        inline ? 'inline-flex' : 'flex-col justify-center',
+        className
       )}
-      aria-hidden="true"
-    />
+    >
+      <div
+        className={clsx(
+          'animate-spin rounded-full border-primary border-t-transparent',
+          sizeStyles[size]
+        )}
+      />
+      {label && (
+        <span className={clsx(
+          'text-text-muted',
+          size === 'sm' ? 'text-xs' : 'text-sm'
+        )}>
+          {label}
+        </span>
+      )}
+    </div>
   );
-
-  if (inline && label) {
-    return (
-      <span className="inline-flex items-center gap-2 text-sm text-muted">
-        {spinner}
-        {label}
-      </span>
-    );
-  }
-
-  if (label) {
-    return (
-      <div className="flex flex-col items-center gap-3 text-sm text-muted">
-        {spinner}
-        <span>{label}</span>
-      </div>
-    );
-  }
-
-  return spinner;
 };
 
 export default Loader;

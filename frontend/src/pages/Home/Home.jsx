@@ -1,23 +1,24 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
-import Card from '../../components/Card/Card.jsx';
+import { Suspense, lazy, useEffect, useState, useMemo } from 'react';
 import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
-import FilterBar from '../../components/FilterBar/FilterBar.jsx';
 import PostCard from '../../components/PostCard/PostCard.jsx';
 import { createFeedPost } from '../../services/feed.api.js';
 import useFeedPosts from '../../hooks/useFeedPosts.js';
+
+const JobsSuggestions = lazy(() => import('../../components/JobsSuggestions/JobsSuggestions.jsx'));
+const StartupsSuggestions = lazy(() => import('../../components/StartupsSuggestions/StartupsSuggestions.jsx'));
+
+const postTypes = [
+  { label: 'Ideas', value: 'startup_idea' },
+  { label: 'Projects', value: 'project' },
+  { label: 'Updates', value: 'work_update' },
+];
 
 const stageFilters = [
   { label: 'All', value: 'all' },
   { label: 'Ideation', value: 'Ideation' },
   { label: 'MVP', value: 'MVP' },
   { label: 'Scaling', value: 'Scaling' },
-];
-
-const postTypes = [
-  { label: 'Startup Ideas', value: 'startup_idea' },
-  { label: 'Projects', value: 'project' },
-  { label: 'Work Updates', value: 'work_update' },
 ];
 
 const initialFormState = {
@@ -28,7 +29,27 @@ const initialFormState = {
   post_type: 'startup_idea',
 };
 
-const HomeQuickScroll = lazy(() => import('../../components/HomeQuickScroll/HomeQuickScroll.jsx'));
+// Icons
+const PlusIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const CloseIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const SearchIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
+  </svg>
+);
 
 const Home = () => {
   const { posts, loading, error, filters, loadPosts } = useFeedPosts();
@@ -37,30 +58,30 @@ const Home = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Initial load
+  // Random positions for suggestion sections (calculated once per session)
+  const suggestionPositions = useMemo(() => {
+    // Jobs appears after post 1-2, Startups appears after post 3-5
+    const jobsPos = Math.floor(Math.random() * 2) + 1; // 1 or 2
+    const startupsPos = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+    return { jobs: jobsPos, startups: startupsPos };
+  }, []);
+
   useEffect(() => {
-    // Only load if we haven't loaded yet, or strictly rely on the hook's state
-    // Actually, hook manages state, just trigger initial load with default if needed, 
-    // or let the hook's default state handle it? 
-    // The hook doesn't auto-load, so we must call loadPosts.
     loadPosts({ stage: 'all', post_type: 'startup_idea' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, []);
 
   const handleFilterChange = (stageValue) => {
-    // User clicked a Stage filter (Ideation, MVP, Scaling)
     loadPosts({ stage: stageValue });
   };
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreatePost = async (event) => {
-    event.preventDefault();
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
     setFormLoading(true);
     setFormError(null);
     try {
@@ -69,269 +90,248 @@ const Home = () => {
         description: form.description,
         post_type: form.post_type,
       };
-
-      // Only add stage and skills for startup ideas and projects
-      if (form.post_type === 'startup_idea' || form.post_type === 'project') {
+      if (form.post_type !== 'work_update') {
         postData.stage = form.stage;
-        postData.required_skills = form.required_skills.split(',').map((skill) => skill.trim()).filter(Boolean);
+        postData.required_skills = form.required_skills.split(',').map(s => s.trim()).filter(Boolean);
       }
-
       await createFeedPost(postData);
       setShowForm(false);
       setForm(initialFormState);
       loadPosts();
     } catch (err) {
       setFormError(err.message || 'Failed to create post');
-    } finally {
-      setFormLoading(false);
     }
+    setFormLoading(false);
   };
 
   const getFormTitle = () => {
-    switch (form.post_type) {
-      case 'startup_idea':
-        return 'Share a new startup idea';
-      case 'project':
-        return 'Share a new project';
-      case 'work_update':
-        return 'Share a work update';
-      default:
-        return 'Share a new post';
+    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
+    return types[form.post_type] || 'Create Post';
+  };
+
+  // Render feed with suggestion sections inserted at random positions
+  const renderFeed = () => {
+    const elements = [];
+    let jobsInserted = false;
+    let startupsInserted = false;
+
+    posts.forEach((post, index) => {
+      // Insert Jobs suggestions at designated position
+      if (!jobsInserted && index === suggestionPositions.jobs) {
+        elements.push(
+          <Suspense key="jobs-suggestions" fallback={null}>
+            <JobsSuggestions />
+          </Suspense>
+        );
+        jobsInserted = true;
+      }
+
+      // Insert Startups suggestions at designated position
+      if (!startupsInserted && index === suggestionPositions.startups) {
+        elements.push(
+          <Suspense key="startups-suggestions" fallback={null}>
+            <StartupsSuggestions />
+          </Suspense>
+        );
+        startupsInserted = true;
+      }
+
+      elements.push(
+        <PostCard key={post.post_id || post.id} post={post} onPostDeleted={() => loadPosts()} />
+      );
+    });
+
+    // If we didn't have enough posts, still show suggestions at the end
+    if (!jobsInserted && posts.length >= 1) {
+      elements.push(
+        <Suspense key="jobs-suggestions" fallback={null}>
+          <JobsSuggestions />
+        </Suspense>
+      );
     }
-  };
-
-  const getFormDescription = () => {
-    switch (form.post_type) {
-      case 'startup_idea':
-        return 'Highlight your startup idea to invite collaborators.';
-      case 'project':
-        return 'Share your project to find team members.';
-      case 'work_update':
-        return 'Update your network about your work progress.';
-      default:
-        return 'Share something with your network.';
+    if (!startupsInserted && posts.length >= 2) {
+      elements.push(
+        <Suspense key="startups-suggestions" fallback={null}>
+          <StartupsSuggestions />
+        </Suspense>
+      );
     }
-  };
 
-  const handlePostDeleted = (deletedPostId) => {
-    // Refresh the feed after a post is deleted
-    loadPosts();
+    return elements;
   };
-
-  const shouldShowQuickScroll = !isSearchFocused && !searchTerm.trim();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header */}
       <header className="space-y-3">
-        {/* Top row */}
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-body">
-            Feed
-          </h1>
+          <h1 className="text-xl font-bold text-gray-900">Feed</h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition active:scale-95"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Post
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2">
-            {/* Search icon */}
-            <button
-              className="rounded-xl border border-border bg-surface px-3 py-2 text-sm"
-              aria-label="Search"
-            >
-              🔍
-            </button>
-
-            {/* Add post */}
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => setShowForm(true)}
-            >
-              Add
-            </Button>
-          </div>
+        {/* Search bar */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search ideas, projects..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-gray-100 border-0 rounded-full py-2.5 px-10 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+          />
+          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         </div>
 
         {/* Post Type Tabs */}
-        <div className="flex gap-1 rounded-2xl bg-surface p-1">
+        <div className="flex border-b border-gray-200">
           {postTypes.map((type) => (
             <button
               key={type.value}
-              onClick={() => {
-                const newFilters = { post_type: type.value };
-                if (type.value === 'work_update') newFilters.stage = 'all';
-                loadPosts(newFilters);
-              }}
-              className={`flex-1 rounded-xl px-4 py-2 text-sm font-medium transition ${filters?.post_type === type.value
-                ? 'bg-primary text-white'
-                : 'text-muted hover:text-body'
+              onClick={() => loadPosts({ post_type: type.value, stage: type.value === 'work_update' ? 'all' : filters?.stage })}
+              className={`flex-1 py-3 text-sm font-semibold transition relative ${filters?.post_type === type.value
+                ? 'text-blue-600'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                 }`}
             >
               {type.label}
+              {filters?.post_type === type.value && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-full" />
+              )}
             </button>
           ))}
         </div>
-
-        {/* Search input */}
-        <input
-          type="text"
-          placeholder="Search ideas, projects, people"
-          value={searchTerm}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setIsSearchFocused(false)}
-          className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-        />
       </header>
 
-      {shouldShowQuickScroll && (
-        <Suspense fallback={null}>
-          <HomeQuickScroll />
-        </Suspense>
+      {/* Stage Filter Pills */}
+      {filters?.post_type !== 'work_update' && (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {stageFilters.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => handleFilterChange(filter.value)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-full whitespace-nowrap transition ${filters?.stage === filter.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       )}
 
+      {/* Feed */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader label="Loading feed" />
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
+          {error}
+        </div>
+      ) : posts.length > 0 ? (
+        <div className="space-y-4">{renderFeed()}</div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-3">🌟</div>
+          <p className="text-gray-600 text-sm mb-4">No posts yet. Be the first!</p>
+          <Button onClick={() => setShowForm(true)}>Create Post</Button>
+        </div>
+      )}
 
+      {/* Create Post Modal */}
       {showForm && (
-        <Card className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">{getFormTitle()}</h2>
-            <p className="text-sm text-muted">{getFormDescription()}</p>
-          </div>
-          <form className="space-y-4" onSubmit={handleCreatePost}>
-            {/* Post Type Selection */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted" htmlFor="post_type">
-                Post Type
-              </label>
-              <select
-                id="post_type"
-                name="post_type"
-                value={form.post_type}
-                onChange={handleFormChange}
-                className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="startup_idea">Startup Ideas</option>
-                <option value="project">Projects</option>
-                <option value="work_update">Work Updates</option>
-              </select>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
+          <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">{getFormTitle()}</h2>
+              <button onClick={() => setShowForm(false)} className="p-2 rounded-full hover:bg-gray-100">
+                <CloseIcon className="w-5 h-5 text-gray-500" />
+              </button>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted" htmlFor="title">
-                Title
-              </label>
+            {/* Form */}
+            <form onSubmit={handleCreatePost} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Post Type */}
+              <div className="flex gap-2">
+                {postTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, post_type: type.value }))}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${form.post_type === type.value
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600'
+                      }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Title */}
               <input
-                id="title"
                 name="title"
                 required
                 value={form.title}
                 onChange={handleFormChange}
-                className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                placeholder={
-                  form.post_type === 'startup_idea'
-                    ? 'e.g. AI Study Buddy'
-                    : form.post_type === 'project'
-                      ? 'e.g. E-commerce Website'
-                      : 'e.g. Completed React Dashboard'
-                }
+                placeholder="What's your idea about?"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted" htmlFor="description">
-                Description
-              </label>
+
+              {/* Description */}
               <textarea
-                id="description"
                 name="description"
-                rows={4}
+                rows={3}
                 required
                 value={form.description}
                 onChange={handleFormChange}
-                className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                placeholder={
-                  form.post_type === 'startup_idea'
-                    ? 'Describe your idea, goals, and what you need'
-                    : form.post_type === 'project'
-                      ? 'Describe your project, tech stack, and team needs'
-                      : 'Share your progress, achievements, or learnings'
-                }
+                placeholder="Tell us more..."
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
 
-            {/* Conditional fields for startup ideas and projects */}
-            {(form.post_type === 'startup_idea' || form.post_type === 'project') && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted" htmlFor="stage">
-                    Stage
-                  </label>
+              {/* Stage & Skills */}
+              {form.post_type !== 'work_update' && (
+                <div className="grid grid-cols-2 gap-3">
                   <select
-                    id="stage"
                     name="stage"
                     value={form.stage}
                     onChange={handleFormChange}
-                    className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm"
                   >
                     <option value="Ideation">Ideation</option>
                     <option value="MVP">MVP</option>
                     <option value="Scaling">Scaling</option>
                   </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-muted" htmlFor="required_skills">
-                    Required Skills
-                  </label>
                   <input
-                    id="required_skills"
                     name="required_skills"
                     value={form.required_skills}
                     onChange={handleFormChange}
-                    className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Separate multiple skills with commas"
+                    placeholder="Skills (comma sep)"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm"
                   />
                 </div>
-              </div>
-            )}
+              )}
 
-            {formError && <p className="text-sm text-danger">{formError}</p>}
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" disabled={formLoading}>
-                {formLoading ? <Loader size="sm" label="Posting" inline /> : 'Publish'}
+              {formError && <p className="text-sm text-red-600">{formError}</p>}
+            </form>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-100">
+              <Button type="submit" className="w-full" onClick={handleCreatePost} disabled={formLoading}>
+                {formLoading ? <Loader size="sm" inline /> : 'Publish'}
               </Button>
             </div>
-          </form>
-        </Card>
-      )}
-
-      {filters?.post_type !== 'work_update' && (
-        <FilterBar filters={stageFilters} activeFilter={filters?.stage || 'all'} onFilterChange={handleFilterChange} />
-      )}
-
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader label="Loading feed" />
-        </div>
-      ) : error ? (
-        <Card className="border border-danger/20 bg-danger/5 text-danger">
-          <p>{error}</p>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {posts.map((post) => (
-            <PostCard
-              key={post.post_id || post.id}
-              post={post}
-              onPostDeleted={handlePostDeleted}
-            />
-          ))}
-
-          {!posts.length && (
-            <Card className="text-center text-sm text-muted">
-              No projects found for this filter yet. Try exploring other stages or share something new.
-            </Card>
-          )}
+          </div>
         </div>
       )}
+
     </div>
   );
 };

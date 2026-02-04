@@ -3,6 +3,15 @@ import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+const RocketIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+    <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+  </svg>
+);
+
 const Login = () => {
   const { signInWithPassword, signUp, authLoading, authError } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -31,9 +40,8 @@ const Login = () => {
         };
         await signUp(email, password, additionalData);
         setSuccessMessage('Account created! You can now sign in.');
-        setIsSignUp(false); // Switch to sign-in view
-        setPassword('');   // Clear password field
-        // Clear additional fields
+        setIsSignUp(false);
+        setPassword('');
         setName('');
         setCollege('');
         setCourse('');
@@ -48,161 +56,188 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl bg-card p-8 shadow-card">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary">
-            🎓
-          </div>
-          <h1 className="text-2xl font-semibold text-body">
-            {isSignUp ? 'Create your Account' : 'Welcome Back'}
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            {isSignUp ? 'Join your campus network.' : 'Sign in to continue.'}
-          </p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-8">
+      {/* Background gradient effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/20 blur-[100px]" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-accent/20 blur-[100px]" />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {successMessage && (
-            <div className="rounded-2xl bg-primary-light p-4 text-center text-sm text-primary">
-              {successMessage}
+      <div className="relative w-full max-w-app">
+        <div className="glass-card p-6 animate-scale-in">
+          {/* Logo & Header */}
+          <div className="mb-6 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent">
+              <RocketIcon className="h-8 w-8 text-white" />
             </div>
-          )}
-
-          {isSignUp && (
-            <>
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium text-muted">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="college" className="block text-sm font-medium text-muted">
-                  College
-                </label>
-                <input
-                  id="college"
-                  type="text"
-                  required
-                  value={college}
-                  onChange={(event) => setCollege(event.target.value)}
-                  placeholder="Enter your college name"
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="course" className="block text-sm font-medium text-muted">
-                  Course
-                </label>
-                <input
-                  id="course"
-                  type="text"
-                  required
-                  value={course}
-                  onChange={(event) => setCourse(event.target.value)}
-                  placeholder="e.g., B.Tech, MBA, BCA"
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="branch" className="block text-sm font-medium text-muted">
-                  Branch/Specialization
-                </label>
-                <input
-                  id="branch"
-                  type="text"
-                  required
-                  value={branch}
-                  onChange={(event) => setBranch(event.target.value)}
-                  placeholder="e.g., Computer Science, Mechanical"
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="year" className="block text-sm font-medium text-muted">
-                  Year of Study
-                </label>
-                <select
-                  id="year"
-                  required
-                  value={year}
-                  onChange={(event) => setYear(event.target.value)}
-                  className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-                >
-                  <option value="">Select your year</option>
-                  <option value="1">1st Year</option>
-                  <option value="2">2nd Year</option>
-                  <option value="3">3rd Year</option>
-                  <option value="4">4th Year</option>
-                  <option value="5">5th Year</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-muted">
-              University Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="yourname@university.edu"
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-            />
+            <h1 className="text-2xl font-bold text-text-primary">
+              {isSignUp ? 'Join Campus Startup' : 'Welcome Back'}
+            </h1>
+            <p className="mt-1 text-sm text-text-muted">
+              {isSignUp ? 'Start your entrepreneurial journey' : 'Sign in to continue'}
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-muted">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-body outline-none ring-primary transition focus:ring"
-            />
-          </div>
-
-          <Button type="submit" variant="primary" className="w-full" disabled={authLoading}>
-            {authLoading ? (
-              <Loader size="sm" label={isSignUp ? 'Creating Account...' : 'Signing In...'} inline />
-            ) : isSignUp ? (
-              'Create Account'
-            ) : (
-              'Sign In'
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {successMessage && (
+              <div className="rounded-xl bg-success-soft p-3 text-center text-sm text-success">
+                {successMessage}
+              </div>
             )}
-          </Button>
 
-          {authError && <p className="text-sm text-danger">{authError}</p>}
-          {error && <p className="text-sm text-danger">{error}</p>}
-        </form>
+            {isSignUp && (
+              <>
+                <div className="space-y-1.5">
+                  <label htmlFor="name" className="text-xs font-medium text-text-muted">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="input"
+                  />
+                </div>
 
-        <div className="mt-6 text-center text-sm">
-          <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-medium text-primary hover:underline">
-            {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-          </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label htmlFor="college" className="text-xs font-medium text-text-muted">
+                      College
+                    </label>
+                    <input
+                      id="college"
+                      type="text"
+                      required
+                      value={college}
+                      onChange={(e) => setCollege(e.target.value)}
+                      placeholder="Your college"
+                      className="input"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="course" className="text-xs font-medium text-text-muted">
+                      Course
+                    </label>
+                    <input
+                      id="course"
+                      type="text"
+                      required
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      placeholder="e.g., B.Tech"
+                      className="input"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label htmlFor="branch" className="text-xs font-medium text-text-muted">
+                      Branch
+                    </label>
+                    <input
+                      id="branch"
+                      type="text"
+                      required
+                      value={branch}
+                      onChange={(e) => setBranch(e.target.value)}
+                      placeholder="e.g., CSE"
+                      className="input"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="year" className="text-xs font-medium text-text-muted">
+                      Year
+                    </label>
+                    <select
+                      id="year"
+                      required
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      className="input"
+                    >
+                      <option value="">Select</option>
+                      <option value="1">1st Year</option>
+                      <option value="2">2nd Year</option>
+                      <option value="3">3rd Year</option>
+                      <option value="4">4th Year</option>
+                      <option value="5">5th Year</option>
+                    </select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-xs font-medium text-text-muted">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@university.edu"
+                className="input"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="text-xs font-medium text-text-muted">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="input"
+              />
+            </div>
+
+            <Button type="submit" variant="primary" className="w-full" disabled={authLoading}>
+              {authLoading ? (
+                <Loader size="sm" inline />
+              ) : isSignUp ? (
+                'Create Account'
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+
+            {(authError || error) && (
+              <p className="text-center text-sm text-danger">{authError || error}</p>
+            )}
+          </form>
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+                setSuccessMessage(null);
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+            </button>
+          </div>
         </div>
+
+        {/* Footer */}
+        <p className="mt-4 text-center text-xs text-text-muted">
+          By continuing, you agree to our Terms & Privacy Policy
+        </p>
       </div>
     </div>
   );

@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import Button from '../Button/Button.jsx';
 import { formatRelativeTime, getInitials } from '../../utils/formatters.js';
 import { deleteComment } from '../../services/comment.api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+
+const TrashIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+  </svg>
+);
 
 const Comment = ({ comment, onDelete }) => {
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) {
-      return;
-    }
+    if (!window.confirm('Delete this comment?')) return;
 
     try {
       setIsDeleting(true);
@@ -19,7 +23,7 @@ const Comment = ({ comment, onDelete }) => {
       onDelete(comment.id);
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('Failed to delete comment. Please try again.');
+      alert('Failed to delete comment.');
     } finally {
       setIsDeleting(false);
     }
@@ -31,40 +35,32 @@ const Comment = ({ comment, onDelete }) => {
   const timeAgo = formatRelativeTime(comment.created_at);
 
   return (
-    <div className="flex gap-3 py-3">
-      <div className="flex-shrink-0">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary-light text-xs font-semibold text-primary">
-          {initials}
-        </span>
+    <div className="flex gap-3 rounded-xl bg-bg-glass p-3 animate-fade-in">
+      {/* Avatar */}
+      <div className="avatar avatar-sm flex-shrink-0">
+        {initials}
       </div>
-      
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-body">{authorName}</span>
-          {comment.author?.course && comment.author?.year && (
-            <span className="text-xs text-muted">
-              {comment.author.course} • Year {comment.author.year}
-            </span>
-          )}
-          {timeAgo && <span className="text-xs text-muted">• {timeAgo}</span>}
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-medium text-text-primary truncate">{authorName}</span>
+          {timeAgo && <span className="text-[10px] text-text-muted">• {timeAgo}</span>}
         </div>
-        
-        <p className="text-sm text-muted leading-relaxed whitespace-pre-wrap">
+
+        <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap break-words">
           {comment.content}
         </p>
-        
+
         {isAuthor && (
-          <div className="pt-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="text-xs text-danger hover:bg-danger/10"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </div>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="mt-2 flex items-center gap-1 text-[10px] text-text-muted hover:text-danger transition"
+          >
+            <TrashIcon className="h-3 w-3" />
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </button>
         )}
       </div>
     </div>

@@ -3,37 +3,37 @@ import Badge from '../Badge/Badge.jsx';
 import Button from '../Button/Button.jsx';
 import Loader from '../Loader/Loader.jsx';
 
-const DurationIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v5l3 3" />
+const DurationIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
   </svg>
 );
 
-const StipendIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M12 3v18" />
-    <path d="M16.5 7.5c0-1.66-2.01-3-4.5-3s-4.5 1.34-4.5 3 2.01 3 4.5 3 4.5 1.34 4.5 3-2.01 3-4.5 3-4.5-1.34-4.5-3" />
+const StipendIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="1" x2="12" y2="23" />
+    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
   </svg>
 );
 
-const LocationIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M12 22s7-5.33 7-12a7 7 0 0 0-14 0c0 6.67 7 12 7 12Z" />
+const LocationIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
   </svg>
 );
 
-const CalendarIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <path d="M16 2v4" />
-    <path d="M8 2v4" />
-    <path d="M3 10h18" />
+const CalendarIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
 
-const resolveValue = (value, fallback = 'Not specified') => {
+const resolveValue = (value, fallback = '—') => {
   if (value === null || value === undefined || value === '') return fallback;
   return value;
 };
@@ -52,7 +52,7 @@ const formatDeadline = (deadlineValue) => {
   if (!deadlineValue) return null;
   const date = new Date(deadlineValue);
   if (Number.isNaN(date.getTime())) return deadlineValue;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
 const InternshipCard = ({
@@ -79,29 +79,6 @@ const InternshipCard = ({
   const deadline =
     internship.application_deadline || internship.deadline || internship.apply_by || internship.application_closes;
   const deadlineText = formatDeadline(deadline);
-  
-  const metadata = [
-    {
-      icon: DurationIcon,
-      label: 'Duration',
-      value: resolveValue(duration),
-    },
-    {
-      icon: StipendIcon,
-      label: 'Stipend',
-      value: resolveValue(stipend),
-    },
-    {
-      icon: LocationIcon,
-      label: 'Location',
-      value: resolveValue(location),
-    },
-    {
-      icon: CalendarIcon,
-      label: 'Apply by',
-      value: resolveValue(deadlineText),
-    },
-  ];
 
   const handleResumeInputChange = (event) => {
     onResumeChange?.(internship.id, event.target.value);
@@ -113,75 +90,101 @@ const InternshipCard = ({
   };
 
   return (
-    <Card className="space-y-4 border border-border/40 bg-card transition hover:border-primary/40">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold text-body">{internship.role_title}</h3>
-          <p className="mt-1 text-sm text-muted">{resolveValue(internship.company_name)}</p>
+    <Card className="space-y-3 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold text-text-primary truncate">{internship.role_title}</h3>
+          <p className="text-sm text-text-muted truncate">{resolveValue(internship.company_name, 'Company')}</p>
         </div>
         {workType && (
-          <Badge variant="neutral" className="capitalize">
+          <Badge variant="primary" className="flex-shrink-0">
             {workType}
           </Badge>
         )}
       </div>
 
-      {internship.description && (
-        <p className="rounded-2xl bg-surface px-4 py-3 text-sm text-muted">{internship.description}</p>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {metadata.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex items-start gap-3 rounded-2xl border border-border/40 bg-surface px-4 py-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light text-primary">
-              <Icon className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-              <p className="text-sm font-medium text-body">{value}</p>
+      {/* Quick Info Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {duration && (
+          <div className="flex items-center gap-2 rounded-lg bg-bg-glass p-2">
+            <div className="icon-circle-sm">
+              <DurationIcon className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Duration</p>
+              <p className="text-xs font-medium text-text-secondary">{duration}</p>
             </div>
           </div>
-        ))}
+        )}
+        {stipend && (
+          <div className="flex items-center gap-2 rounded-lg bg-bg-glass p-2">
+            <div className="icon-circle-sm icon-circle-accent">
+              <StipendIcon className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Stipend</p>
+              <p className="text-xs font-medium text-text-secondary">{stipend}</p>
+            </div>
+          </div>
+        )}
+        {location && (
+          <div className="flex items-center gap-2 rounded-lg bg-bg-glass p-2">
+            <div className="icon-circle-sm">
+              <LocationIcon className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Location</p>
+              <p className="text-xs font-medium text-text-secondary">{location}</p>
+            </div>
+          </div>
+        )}
+        {deadlineText && (
+          <div className="flex items-center gap-2 rounded-lg bg-bg-glass p-2">
+            <div className="icon-circle-sm">
+              <CalendarIcon className="h-3.5 w-3.5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase tracking-wide">Apply by</p>
+              <p className="text-xs font-medium text-text-secondary">{deadlineText}</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <Button variant="subtle" size="sm" onClick={() => onViewDetails?.(internship.id)} className="w-full sm:w-auto">
-          View Details
-        </Button>
-        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-          <div className="flex-1 sm:w-64">
-            <label htmlFor={`resume-${internship.id}`} className="sr-only">
-              Resume / Portfolio Link
-            </label>
-            <input
-              id={`resume-${internship.id}`}
-              type="url"
-              required
-              placeholder="https://"
-              value={resumeValue}
-              onChange={handleResumeInputChange}
-              disabled={isApplied}
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
+      {/* Description */}
+      {internship.description && (
+        <p className="text-sm text-text-muted line-clamp-2">{internship.description}</p>
+      )}
+
+      {/* Actions */}
+      <form onSubmit={handleSubmit} className="space-y-2 pt-2 border-t border-divider">
+        <div className="flex gap-2">
+          <input
+            type="url"
+            required
+            placeholder="Paste resume link..."
+            value={resumeValue}
+            onChange={handleResumeInputChange}
+            disabled={isApplied}
+            className="input text-xs flex-1"
+          />
           <Button
             type="submit"
-            variant={isApplied ? 'subtle' : 'primary'}
+            variant={isApplied ? 'ghost' : 'primary'}
             size="sm"
             disabled={isApplied || applyLoading}
-            className="whitespace-nowrap"
           >
             {applyLoading ? (
-              <Loader size="sm" inline label="Submitting" />
+              <Loader size="sm" inline />
             ) : isApplied ? (
-              'Application Submitted'
+              'Applied ✓'
             ) : (
-              'Submit Application'
+              'Apply'
             )}
           </Button>
-        </form>
-      </div>
+        </div>
+      </form>
     </Card>
   );
 };

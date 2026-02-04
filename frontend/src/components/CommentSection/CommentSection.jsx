@@ -4,6 +4,20 @@ import Loader from '../Loader/Loader.jsx';
 import Comment from '../Comment/Comment.jsx';
 import { getComments, createComment } from '../../services/comment.api.js';
 
+const CloseIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const SendIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
+
 const CommentSection = ({ postId, isOpen, onClose }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,10 +47,8 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    
-    if (!newComment.trim()) {
-      return;
-    }
+
+    if (!newComment.trim()) return;
 
     try {
       setSubmitting(true);
@@ -45,7 +57,7 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
       setNewComment('');
     } catch (err) {
       console.error('Error creating comment:', err);
-      alert('Failed to post comment. Please try again.');
+      alert('Failed to post comment.');
     } finally {
       setSubmitting(false);
     }
@@ -58,16 +70,19 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-      <div className="w-full max-w-lg rounded-t-3xl bg-card shadow-xl sm:rounded-3xl max-h-[80vh] flex flex-col">
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="modal-content animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border p-4">
-          <h3 className="text-lg font-semibold text-body">Comments</h3>
+        <div className="flex items-center justify-between border-b border-divider px-4 py-3">
+          <h3 className="text-lg font-semibold text-text-primary">Comments</h3>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-muted hover:bg-surface hover:text-body"
+            className="rounded-full p-2 text-text-muted hover:bg-bg-glass hover:text-text-primary transition"
           >
-            ✕
+            <CloseIcon className="h-5 w-5" />
           </button>
         </div>
 
@@ -78,18 +93,20 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
               <Loader label="Loading comments" />
             </div>
           ) : error ? (
-            <div className="text-center py-8 text-danger">
-              <p>{error}</p>
-              <Button size="sm" variant="ghost" onClick={loadComments} className="mt-2">
+            <div className="py-8 text-center">
+              <p className="text-sm text-danger mb-3">{error}</p>
+              <Button size="sm" variant="ghost" onClick={loadComments}>
                 Try again
               </Button>
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center py-8 text-muted">
-              <p>No comments yet. Be the first to comment!</p>
+            <div className="py-8 text-center">
+              <div className="text-3xl mb-2">💬</div>
+              <p className="text-sm text-text-muted">No comments yet.</p>
+              <p className="text-xs text-text-muted">Be the first to comment!</p>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-3">
               {comments.map((comment) => (
                 <Comment
                   key={comment.id}
@@ -101,36 +118,30 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Comment Form */}
-        <div className="border-t border-border p-4">
-          <form onSubmit={handleSubmitComment} className="space-y-3">
-            <textarea
+        {/* Comment Input */}
+        <div className="border-t border-divider p-4">
+          <form onSubmit={handleSubmitComment} className="flex gap-2">
+            <input
+              type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              rows={3}
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="input flex-1"
               disabled={submitting}
             />
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                disabled={!newComment.trim() || submitting}
-              >
-                {submitting ? <Loader size="sm" inline /> : 'Post'}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              variant="primary"
+              size="sm"
+              disabled={!newComment.trim() || submitting}
+              className="px-3"
+            >
+              {submitting ? (
+                <Loader size="sm" inline />
+              ) : (
+                <SendIcon className="h-4 w-4" />
+              )}
+            </Button>
           </form>
         </div>
       </div>

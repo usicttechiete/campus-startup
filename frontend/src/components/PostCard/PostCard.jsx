@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Card from '../Card/Card.jsx';
 import CommentSection from '../CommentSection/CommentSection.jsx';
 import { getLikeInfo, toggleLike } from '../../services/like.api.js';
 import { deleteFeedPost } from '../../services/feed.api.js';
@@ -12,64 +11,40 @@ import {
   getInitials,
 } from '../../utils/formatters.js';
 
-const stageStyles = {
-  Ideation: 'bg-[#E8F4FF] text-[#0B61A4]',
-  MVP: 'bg-[#E8FFEA] text-[#1B7F3A]',
-  Scaling: 'bg-[#FFF0E6] text-[#C25A00]',
-  default: 'bg-primary-light text-primary',
-};
-
-const ActionButton = ({ icon: Icon, label, onClick, disabled = false }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-      disabled 
-        ? 'text-muted/50 cursor-not-allowed' 
-        : 'text-muted hover:bg-primary-light/60 hover:text-primary'
-    }`}
-  >
-    <Icon className="h-4 w-4" aria-hidden="true" />
-    <span>{label}</span>
-  </button>
-);
-
-const CommentIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 0 1-3.6-.64L3 20l1.64-4.91A7.64 7.64 0 0 1 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
-  </svg>
-);
-
-const ShareIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
-    <path d="M16 6l-4-4-4 4" />
-    <path d="M12 2v14" />
-  </svg>
-);
-
-const DeleteIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M3 6h18" />
-    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-  </svg>
-);
-
-const MoreIcon = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <circle cx="12" cy="12" r="1" />
-    <circle cx="12" cy="5" r="1" />
-    <circle cx="12" cy="19" r="1" />
-  </svg>
-);
-
-const HeartIcon = ({ filled, ...props }) => (
-  <svg viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
+// Twitter/Reddit-style icons
+const HeartIcon = ({ filled, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   </svg>
 );
+
+const CommentIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+);
+
+const ShareIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+    <polyline points="16 6 12 2 8 6" />
+    <line x1="12" y1="2" x2="12" y2="15" />
+  </svg>
+);
+
+const MoreIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+    <circle cx="5" cy="12" r="1" />
+  </svg>
+);
+
+const stageColors = {
+  Ideation: 'bg-blue-100 text-blue-700',
+  MVP: 'bg-green-100 text-green-700',
+  Scaling: 'bg-orange-100 text-orange-700',
+};
 
 const PostCard = ({ post, onPostDeleted }) => {
   const { user } = useAuth();
@@ -77,12 +52,10 @@ const PostCard = ({ post, onPostDeleted }) => {
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
-  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  if (!post) {
-    return null;
-  }
+  if (!post) return null;
 
   const {
     id: postId,
@@ -100,171 +73,101 @@ const PostCard = ({ post, onPostDeleted }) => {
 
   const actualPostId = postId || post_id;
   const isOwner = user && authorId && user.id === authorId;
-  
-  // Use author data from backend (author) or fallback to authorProfile
   const authorData = author || authorProfile;
-  
-  // Debug: Log the author data to see what we're getting
-  console.log('Post author data:', { author, authorProfile, authorData, displayName: authorData?.name });
-  
-  const displayName = formatName(authorData?.name) || 'Anonymous User';
+
+  const displayName = formatName(authorData?.name) || 'Anonymous';
   const role = formatRole(authorData?.role);
   const college = authorData?.college;
-  const headline = [role, college].filter(Boolean).join(' • ');
   const publishedTime = formatRelativeTime(createdAt);
   const skills = formatSkills(requiredSkills);
   const initials = getInitials(displayName);
-  const stageBadgeClass = stageStyles[stage] || stageStyles.default;
+  const hasImage = imageUrl && imageUrl.trim().length > 0;
 
-  const hasImage = typeof imageUrl === 'string' && imageUrl.trim().length > 0;
-
-  // Load like info when component mounts
   useEffect(() => {
-    if (actualPostId) {
-      loadLikeInfo();
-    }
+    if (actualPostId) loadLikeInfo();
   }, [actualPostId]);
 
-  // Close delete menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showDeleteMenu && !event.target.closest('.delete-menu-container')) {
-        setShowDeleteMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showDeleteMenu]);
+    const handleClickOutside = () => setShowMenu(false);
+    if (showMenu) document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showMenu]);
 
   const loadLikeInfo = async () => {
     try {
-      const likeInfo = await getLikeInfo(actualPostId);
-      setLikeCount(likeInfo.count);
-      setIsLiked(likeInfo.isLiked);
-    } catch (error) {
-      console.error('Error loading like info:', error);
-    }
+      const info = await getLikeInfo(actualPostId);
+      setLikeCount(info.count);
+      setIsLiked(info.isLiked);
+    } catch (e) { /* ignore */ }
   };
 
-  const handleCommentClick = () => {
-    setShowComments(true);
-  };
-
-  const handleLikeClick = async () => {
+  const handleLike = async () => {
     if (likeLoading) return;
-
+    setLikeLoading(true);
     try {
-      setLikeLoading(true);
       const result = await toggleLike(actualPostId);
       setIsLiked(result.isLiked);
       setLikeCount(result.likeCount);
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      alert('Failed to update like. Please try again.');
-    } finally {
-      setLikeLoading(false);
-    }
+    } catch (e) { /* ignore */ }
+    setLikeLoading(false);
   };
 
-  const handleShareClick = async () => {
-    const shareData = {
-      title: title,
-      text: `Check out this startup idea: ${title}`,
-      url: window.location.href,
-    };
-
+  const handleShare = async () => {
     try {
-      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
+      if (navigator.share) {
+        await navigator.share({ title, text: description, url: window.location.href });
       } else {
-        // Fallback: copy to clipboard
-        const shareText = `${title}\n\n${description}\n\n${window.location.href}`;
-        await navigator.clipboard.writeText(shareText);
-        alert('Post details copied to clipboard!');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      // Final fallback: copy URL only
-      try {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      } catch (clipboardError) {
-        console.error('Clipboard error:', clipboardError);
-        alert('Unable to share. Please copy the URL manually.');
+        alert('Link copied!');
       }
-    }
+    } catch (e) { /* ignore */ }
   };
 
-  const handleDeleteClick = async () => {
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      return;
-    }
-
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this post?')) return;
+    setDeleteLoading(true);
     try {
-      setDeleteLoading(true);
       await deleteFeedPost(actualPostId);
-      
-      // Call the callback to refresh the feed
-      if (onPostDeleted) {
-        onPostDeleted(actualPostId);
-      }
-      
-      alert('Post deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      alert('Failed to delete post. Please try again.');
-    } finally {
-      setDeleteLoading(false);
-      setShowDeleteMenu(false);
+      onPostDeleted?.(actualPostId);
+    } catch (e) {
+      alert('Failed to delete');
     }
+    setDeleteLoading(false);
+    setShowMenu(false);
   };
 
   return (
-    <Card className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary-light text-base font-semibold text-primary">
-            {initials || 'CS'}
-          </span>
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold text-body">{displayName}</p>
-              {publishedTime && <span className="text-xs text-muted">• {publishedTime}</span>}
-            </div>
-            <p className="text-xs text-muted">
-              {headline || 'Campus Network member'}
-            </p>
-          </div>
+    <article className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 hover:shadow-md transition-shadow">
+      {/* Header - Twitter style */}
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+          {initials || '?'}
         </div>
-        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-gray-900 text-sm">{displayName}</span>
+            {role && <span className="text-gray-500 text-xs">@{role.toLowerCase().replace(/\s+/g, '')}</span>}
+            <span className="text-gray-400 text-xs">· {publishedTime}</span>
+          </div>
+          {college && <p className="text-gray-500 text-xs truncate">{college}</p>}
+        </div>
+
+        {/* Stage badge & menu */}
         <div className="flex items-center gap-2">
           {stage && (
-            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${stageBadgeClass}`}>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${stageColors[stage] || 'bg-gray-100 text-gray-600'}`}>
               {stage}
             </span>
           )}
-          
-          {/* Delete menu for post owner */}
           {isOwner && (
-            <div className="relative delete-menu-container">
-              <button
-                onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                className="rounded-full p-2 text-muted hover:bg-surface hover:text-body transition"
-                aria-label="Post options"
-              >
-                <MoreIcon className="h-4 w-4" />
+            <div className="relative">
+              <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+                <MoreIcon className="w-4 h-4" />
               </button>
-              
-              {showDeleteMenu && (
-                <div className="absolute right-0 top-full mt-1 z-10 bg-card border border-border rounded-xl shadow-lg py-1 min-w-[120px]">
-                  <button
-                    onClick={handleDeleteClick}
-                    disabled={deleteLoading}
-                    className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-danger/10 transition flex items-center gap-2"
-                  >
-                    <DeleteIcon className="h-4 w-4" />
-                    {deleteLoading ? 'Deleting...' : 'Delete Post'}
+              {showMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-20 min-w-[100px]">
+                  <button onClick={handleDelete} disabled={deleteLoading} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                    {deleteLoading ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               )}
@@ -273,65 +176,69 @@ const PostCard = ({ post, onPostDeleted }) => {
         </div>
       </div>
 
-      <div className="space-y-3 text-sm text-body">
-        <h3 className="text-base font-semibold text-body">{title}</h3>
-        {description && <p className="leading-relaxed text-muted whitespace-pre-line">{description}</p>}
-        {hasImage && (
-          <div className="overflow-hidden rounded-2xl border border-border/60">
-            <img src={imageUrl} alt={title} loading="lazy" className="h-full w-full object-cover" />
-          </div>
+      {/* Content - Reddit style */}
+      <div className="space-y-2">
+        <h3 className="font-semibold text-gray-900 text-[15px] leading-snug">{title}</h3>
+        {description && (
+          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{description}</p>
         )}
       </div>
 
-      {!!skills.length && (
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill) => (
-            <span key={skill} className="inline-flex items-center rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted">
-              {skill}
-            </span>
-          ))}
+      {/* Image */}
+      {hasImage && (
+        <div className="rounded-xl overflow-hidden border border-gray-100">
+          <img src={imageUrl} alt={title} loading="lazy" className="w-full h-auto max-h-80 object-cover" />
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-        {authorData?.branch && <span>Branch: {authorData.branch}</span>}
-        {authorData?.year && <span>Year {authorData.year}</span>}
+      {/* Skills tags */}
+      {skills.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {skills.slice(0, 5).map((skill) => (
+            <span key={skill} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              {skill}
+            </span>
+          ))}
+          {skills.length > 5 && (
+            <span className="text-xs text-gray-400">+{skills.length - 5} more</span>
+          )}
+        </div>
+      )}
+
+      {/* Actions - Twitter style */}
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <button
+          onClick={handleLike}
+          disabled={likeLoading}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isLiked
+              ? 'text-red-500 bg-red-50 hover:bg-red-100'
+              : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
+            }`}
+        >
+          <HeartIcon filled={isLiked} className="w-4 h-4" />
+          <span className="font-medium">{likeCount || ''}</span>
+        </button>
+
+        <button
+          onClick={() => setShowComments(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
+        >
+          <CommentIcon className="w-4 h-4" />
+          <span>Comment</span>
+        </button>
+
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
+        >
+          <ShareIcon className="w-4 h-4" />
+          <span>Share</span>
+        </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-3 text-xs text-muted">
-          {authorData?.course && <span>{authorData.course}</span>}
-          {authorData?.college && <span>{authorData.college}</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <ActionButton 
-            icon={({ className, ...props }) => (
-              <HeartIcon 
-                filled={isLiked} 
-                className={`${className} ${isLiked ? 'text-red-500' : ''}`} 
-                {...props} 
-              />
-            )}
-            label={`${likeCount} Like${likeCount !== 1 ? 's' : ''}`}
-            onClick={handleLikeClick}
-            disabled={likeLoading}
-          />
-          <ActionButton 
-            icon={CommentIcon} 
-            label={`Comment${post.comment_count ? ` (${post.comment_count.length || 0})` : ''}`} 
-            onClick={handleCommentClick} 
-          />
-          <ActionButton icon={ShareIcon} label="Share" onClick={handleShareClick} />
-        </div>
-      </div>
-
-      {/* Comment Section Modal */}
-      <CommentSection
-        postId={actualPostId}
-        isOpen={showComments}
-        onClose={() => setShowComments(false)}
-      />
-    </Card>
+      {/* Comments Modal */}
+      <CommentSection postId={actualPostId} isOpen={showComments} onClose={() => setShowComments(false)} />
+    </article>
   );
 };
 

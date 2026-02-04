@@ -20,6 +20,23 @@ const jobFormTemplate = {
 
 const statusOptions = ['Applied', 'Shortlisted', 'Rejected'];
 
+// Icons
+const BriefcaseIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+  </svg>
+);
+
+const UsersIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
 const Hire = () => {
   const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState(null);
@@ -32,6 +49,7 @@ const Hire = () => {
   const [jobSubmitting, setJobSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
   const [statusLoadingId, setStatusLoadingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   const loadJobs = async () => {
     setLoadingJobs(true);
@@ -91,8 +109,9 @@ const Hire = () => {
     setJobError(null);
     try {
       await postJob(jobForm);
-      setSuccessMessage('Role posted successfully.');
+      setSuccessMessage('Role posted successfully!');
       setJobForm(jobFormTemplate);
+      setShowForm(false);
       await loadJobs();
     } catch (err) {
       setJobError(err.message || 'Failed to post job');
@@ -115,199 +134,226 @@ const Hire = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-body">Hire</h1>
-        <p className="mt-1 text-sm text-muted">
-          Post new roles and review applicants with Trust Scores and Levels.
-        </p>
+    <div className="space-y-4">
+      {/* Header */}
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-text-primary">Hire</h1>
+          <p className="text-xs text-text-muted">Post roles and review applicants</p>
+        </div>
+        <Button variant="primary" size="sm" onClick={() => setShowForm(!showForm)}>
+          {showForm ? 'Cancel' : '+ Post Role'}
+        </Button>
       </header>
 
-      <Card className="space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-body">Post a new role</h2>
-          <p className="mt-1 text-sm text-muted">Share opportunities with verified students from your campus.</p>
+      {/* Success Message */}
+      {successMessage && (
+        <div className="flex items-center gap-2 rounded-lg bg-success-soft p-3 text-sm text-success">
+          <span>✓</span> {successMessage}
         </div>
-        <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleJobSubmit}>
-          <div className="sm:col-span-2 space-y-2">
-            <label htmlFor="role_title" className="text-xs font-semibold text-muted">
-              Role title
-            </label>
-            <input
-              id="role_title"
-              name="role_title"
-              required
-              value={jobForm.role_title}
-              onChange={handleJobFormChange}
-              placeholder="Product Design Intern"
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="sm:col-span-2 space-y-2">
-            <label htmlFor="description" className="text-xs font-semibold text-muted">
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              required
-              rows={3}
-              value={jobForm.description}
-              onChange={handleJobFormChange}
-              placeholder="Highlight responsibilities and what you are looking for"
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="type" className="text-xs font-semibold text-muted">
-              Opportunity type
-            </label>
-            <select
-              id="type"
-              name="type"
-              value={jobForm.type}
-              onChange={handleJobFormChange}
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="Internship">Internship</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Project">Project</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="external_link" className="text-xs font-semibold text-muted">
-              Application link (optional)
-            </label>
-            <input
-              id="external_link"
-              name="external_link"
-              value={jobForm.external_link}
-              onChange={handleJobFormChange}
-              placeholder="https://"
-              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-          <div className="sm:col-span-2 flex items-center justify-between gap-2">
-            {jobError && <p className="text-sm text-danger">{jobError}</p>}
-            {successMessage && <p className="text-sm text-success">{successMessage}</p>}
-            <Button type="submit" variant="primary" className="sm:ml-auto" disabled={jobSubmitting}>
-              {jobSubmitting ? <Loader size="sm" label="Posting" inline /> : 'Post Role'}
-            </Button>
-          </div>
-        </form>
-      </Card>
+      )}
 
-      <div className="space-y-5">
+      {/* Job Form - Collapsible */}
+      {showForm && (
+        <Card className="animate-slide-up">
+          <form className="space-y-4" onSubmit={handleJobSubmit}>
+            <div className="space-y-1.5">
+              <label htmlFor="role_title" className="text-xs text-text-muted">Role title</label>
+              <input
+                id="role_title"
+                name="role_title"
+                required
+                value={jobForm.role_title}
+                onChange={handleJobFormChange}
+                placeholder="e.g. Product Design Intern"
+                className="input"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="description" className="text-xs text-text-muted">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                required
+                rows={3}
+                value={jobForm.description}
+                onChange={handleJobFormChange}
+                placeholder="What you're looking for..."
+                className="input"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="type" className="text-xs text-text-muted">Type</label>
+                <select
+                  id="type"
+                  name="type"
+                  value={jobForm.type}
+                  onChange={handleJobFormChange}
+                  className="input"
+                >
+                  <option value="Internship">Internship</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Project">Project</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="external_link" className="text-xs text-text-muted">Apply link</label>
+                <input
+                  id="external_link"
+                  name="external_link"
+                  type="url"
+                  value={jobForm.external_link}
+                  onChange={handleJobFormChange}
+                  placeholder="https://..."
+                  className="input"
+                />
+              </div>
+            </div>
+
+            {jobError && <p className="text-xs text-danger">{jobError}</p>}
+
+            <Button type="submit" variant="primary" disabled={jobSubmitting} className="w-full">
+              {jobSubmitting ? <Loader size="sm" inline label="Posting" /> : 'Post Role'}
+            </Button>
+          </form>
+        </Card>
+      )}
+
+      {/* Jobs List */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-body">Active job postings</h2>
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {jobs.length} roles
-          </span>
+          <h2 className="text-sm font-semibold text-text-secondary">Your Roles</h2>
+          <span className="text-xs text-text-muted">{jobs.length} posted</span>
         </div>
 
         {loadingJobs ? (
-          <div className="flex justify-center py-10">
-            <Loader label="Fetching jobs" />
+          <div className="flex justify-center py-8">
+            <Loader label="Loading roles" />
           </div>
-        ) : jobError ? (
-          <Card className="border border-danger/20 bg-danger/5 text-danger">
-            <p>{jobError}</p>
-          </Card>
+        ) : jobError && !showForm ? (
+          <Card className="bg-danger-soft border-danger/20 text-danger text-sm">{jobError}</Card>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
-            <div className="space-y-3">
-              {jobs.map((job) => (
-                <Card
-                  key={job.id}
-                  className={`cursor-pointer space-y-3 border transition ${
-                    selectedJobId === job.id ? 'border-primary-light ring-2 ring-primary/20' : 'border-transparent'
-                  }`}
-                  onClick={() => setSelectedJobId(job.id)}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-body">{job.role_title}</h3>
-                      <p className="mt-1 text-sm text-muted">{job.company_name}</p>
-                    </div>
-                    <Badge variant="neutral" className="capitalize">
-                      {job.type}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted">{job.description}</p>
-                  <p className="text-xs text-muted">Applicants: {job.applicant_count ?? job.applicants_count ?? 0}</p>
-                </Card>
-              ))}
-
-              {!jobs.length && (
-                <Card className="text-center text-sm text-muted">
-                  No roles posted yet. Start by sharing your first opportunity.
-                </Card>
-              )}
-            </div>
-
-            <Card className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-body">Recent applicants</h2>
-                {selectedJob ? (
-                  <Badge variant="neutral">{selectedJob.role_title}</Badge>
-                ) : null}
+          <>
+            {/* Job Tabs */}
+            {jobs.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                {jobs.map((job) => (
+                  <button
+                    key={job.id}
+                    type="button"
+                    onClick={() => setSelectedJobId(job.id)}
+                    className={`chip flex-shrink-0 ${selectedJobId === job.id ? 'chip-active' : ''}`}
+                  >
+                    <BriefcaseIcon className="h-3 w-3" />
+                    {job.role_title}
+                    <span className="ml-1 text-[10px] opacity-60">
+                      ({job.applicant_count ?? job.applicants_count ?? 0})
+                    </span>
+                  </button>
+                ))}
               </div>
+            )}
 
-              {loadingApplicants ? (
-                <div className="flex justify-center py-6">
-                  <Loader label="Loading applicants" />
+            {/* Selected Job Details + Applicants */}
+            {selectedJob && (
+              <Card className="space-y-4 animate-fade-in">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-semibold text-text-primary">{selectedJob.role_title}</h3>
+                    <p className="text-xs text-text-muted">{selectedJob.company_name || 'Your company'}</p>
+                  </div>
+                  <Badge variant="primary">{selectedJob.type}</Badge>
                 </div>
-              ) : applicantError ? (
-                <p className="text-sm text-danger">{applicantError}</p>
-              ) : (
-                <div className="space-y-3">
-                  {applicants.map((applicant) => (
-                    <div key={applicant.id} className="rounded-2xl border border-border p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-body">{applicant.name}</p>
-                          <p className="text-xs text-muted">{applicant.degree || applicant.program}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="trust">{formatTrustScore(applicant.trust_score)}</Badge>
-                          <Badge variant="level">{formatLevel(applicant.level)}</Badge>
-                        </div>
-                      </div>
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-                        <span className="rounded-full bg-surface px-3 py-1">Status: {applicant.status}</span>
-                        {applicant.skills?.map((skill) => (
-                          <span key={skill} className="rounded-full bg-surface px-3 py-1">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {statusOptions.map((status) => (
-                          <Button
-                            key={status}
-                            variant={status === applicant.status ? 'primary' : 'subtle'}
-                            size="sm"
-                            onClick={() => handleStatusUpdate(applicant.id, status)}
-                            disabled={statusLoadingId === applicant.id}
-                          >
-                            {statusLoadingId === applicant.id && status !== applicant.status ? (
-                              <Loader size="sm" inline label="Updating" />
-                            ) : (
-                              status
-                            )}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
 
-                  {!applicants.length && (
-                    <p className="text-sm text-muted">No applicants yet. Share the role to reach more students.</p>
+                {selectedJob.description && (
+                  <p className="text-sm text-text-secondary">{selectedJob.description}</p>
+                )}
+
+                <div className="border-t border-divider pt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <UsersIcon className="h-4 w-4 text-text-muted" />
+                    <span className="text-sm font-medium text-text-secondary">Applicants</span>
+                    <Badge variant="neutral" className="text-[10px]">{applicants.length}</Badge>
+                  </div>
+
+                  {loadingApplicants ? (
+                    <div className="flex justify-center py-6">
+                      <Loader size="sm" label="Loading" />
+                    </div>
+                  ) : applicantError ? (
+                    <p className="text-xs text-danger">{applicantError}</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {applicants.map((applicant) => (
+                        <div
+                          key={applicant.id}
+                          className="rounded-lg bg-bg-glass p-3 border border-border/50"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <p className="text-sm font-medium text-text-primary">{applicant.name}</p>
+                              <p className="text-xs text-text-muted">{applicant.degree || applicant.program}</p>
+                            </div>
+                            <div className="flex gap-1">
+                              <Badge variant="accent">{formatTrustScore(applicant.trust_score)}</Badge>
+                              <Badge variant="secondary">{formatLevel(applicant.level)}</Badge>
+                            </div>
+                          </div>
+
+                          {applicant.skills?.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {applicant.skills.slice(0, 3).map((skill) => (
+                                <span key={skill} className="text-[10px] bg-bg-elevated px-2 py-0.5 rounded-full text-text-muted">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex gap-1.5">
+                            {statusOptions.map((status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() => handleStatusUpdate(applicant.id, status)}
+                                disabled={statusLoadingId === applicant.id}
+                                className={`chip text-[10px] py-1 ${status === applicant.status ? 'chip-active' : ''
+                                  } ${status === 'Rejected' ? 'hover:border-danger/30' : ''}`}
+                              >
+                                {statusLoadingId === applicant.id && status !== applicant.status ? (
+                                  <Loader size="sm" inline />
+                                ) : (
+                                  status
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      {!applicants.length && (
+                        <div className="py-6 text-center">
+                          <p className="text-sm text-text-muted">No applicants yet</p>
+                          <p className="text-xs text-text-disabled mt-1">Share this role to get started</p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </Card>
-          </div>
+              </Card>
+            )}
+
+            {!jobs.length && !showForm && (
+              <Card className="py-8 text-center">
+                <div className="mb-2 text-3xl">💼</div>
+                <p className="text-sm text-text-secondary">No roles posted yet</p>
+                <p className="text-xs text-text-muted mt-1">Post your first role to start hiring</p>
+              </Card>
+            )}
+          </>
         )}
       </div>
     </div>
