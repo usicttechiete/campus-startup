@@ -153,8 +153,24 @@ const getMyStartup = async (req, res) => {
   }
 };
 
+const getStartupById = async (req, res) => {
+  try {
+    const { id: startupId } = req.params;
+    const startup = await Startup.findById(startupId);
+
+    if (!startup) {
+      return res.status(404).json({ message: 'Startup not found' });
+    }
+
+    return res.status(200).json(startup);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createStartup,
   getMyStartup,
+  getStartupById,
   deleteMyStartup,
 };

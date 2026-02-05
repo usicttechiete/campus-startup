@@ -637,6 +637,17 @@ const StudentProfile = () => {
                   </div>
                 </div>
               </Card>
+              {myStartup.id && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="subtle"
+                  className="w-full rounded-full"
+                  onClick={() => navigate(`/startup/${myStartup.id}`)}
+                >
+                  View startup page
+                </Button>
+              )}
               <Button
                 type="button"
                 size="sm"

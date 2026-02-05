@@ -14,6 +14,9 @@ import Hire from '../pages/Hire/Hire.jsx';
 import AdminStartupsDashboard from '../pages/AdminStartups/AdminStartupsDashboard.jsx';
 import EventsList from '../pages/Events/EventsList.jsx';
 import EventDetail from '../pages/Events/EventDetail.jsx';
+import ProjectDetail from '../pages/Projects/ProjectDetail.jsx';
+import InternshipDetail from '../pages/Internships/InternshipDetail.jsx';
+import StartupDetail from '../pages/Startups/StartupDetail.jsx';
 
 // AI Chat Context
 const AIChatContext = createContext();
@@ -69,6 +72,9 @@ const App = () => {
                   <Route path="events" element={<Events />} />
                   <Route path="events/list" element={<EventsList />} />
                   <Route path="events/:id" element={<EventDetail />} />
+                  <Route path="project/:id" element={<ProjectDetail />} />
+                  <Route path="internship/:id" element={<InternshipDetail />} />
+                  <Route path="startup/:id" element={<StartupDetail />} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="internships" element={<Internships />} />
                   <Route path="hire" element={

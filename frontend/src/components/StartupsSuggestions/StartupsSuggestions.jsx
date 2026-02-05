@@ -63,7 +63,7 @@ const StartupsSuggestions = () => {
                     title: post.title || 'Startup Idea',
                     stage: post.stage,
                     authorName: post.author?.name || post.authorProfile?.name || 'Anonymous',
-                    onClick: () => navigate('/'),
+                    onClick: () => navigate(`/project/${post.post_id || post.id}`),
                 }));
 
                 setItems(startupCards);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../../components/Card/Card.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import InternshipCard from '../../components/InternshipCard/InternshipCard.jsx';
@@ -67,6 +67,7 @@ const FilterIcon = ({ className }) => (
 );
 
 const Internships = () => {
+  const navigate = useNavigate();
   const { notify } = useNotification();
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
@@ -134,6 +135,11 @@ const Internships = () => {
 
   const handleResumeInputChange = (jobId, value) => {
     setResumeInputs((prev) => ({ ...prev, [jobId]: value }));
+  };
+
+  const handleViewDetails = (job) => {
+    if (!job?.id) return;
+    navigate(`/internship/${job.id}`);
   };
 
   const handleSubmitApplication = async (job) => {
@@ -310,6 +316,7 @@ const Internships = () => {
             <InternshipCard
               key={job.id}
               internship={job}
+              onViewDetails={handleViewDetails}
               onResumeChange={handleResumeInputChange}
               resumeValue={resumeInputs[job.id] ?? ''}
               onSubmit={handleSubmitApplication}

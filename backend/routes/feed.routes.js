@@ -10,6 +10,7 @@ router.delete('/:id', authMiddleware, feedController.deletePostController);
 
 // RESTful aliases aligning with documented API contract
 router.get('/posts', authMiddleware, feedController.getFeedController);
+router.get('/posts/:id', authMiddleware, feedController.getPostByIdController);
 router.post('/posts', authMiddleware, feedController.createPostController);
 router.post('/posts/:id/collaborate', authMiddleware, feedController.joinPostController);
 router.delete('/posts/:id', authMiddleware, feedController.deletePostController);

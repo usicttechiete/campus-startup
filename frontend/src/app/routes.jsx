@@ -6,6 +6,9 @@ const HirePage = lazy(() => import('../pages/Hire/Hire.jsx'));
 const EventsListPage = lazy(() => import('../pages/Events/EventsList.jsx'));
 const EventDetailPage = lazy(() => import('../pages/Events/EventDetail.jsx'));
 const EventAdminDashboardPage = lazy(() => import('../pages/Events/EventAdminDashboard.jsx'));
+const ProjectDetailPage = lazy(() => import('../pages/Projects/ProjectDetail.jsx'));
+const InternshipDetailPage = lazy(() => import('../pages/Internships/InternshipDetail.jsx'));
+const StartupDetailPage = lazy(() => import('../pages/Startups/StartupDetail.jsx'));
 const AdminStartupsDashboardPage = lazy(() => import('../pages/AdminStartups/AdminStartupsDashboard.jsx'));
 const ProfilePage = lazy(() => import('../pages/Profile/Profile.jsx'));
 const LetsBuildPage = lazy(() => import('../pages/LetsBuild/LetsBuild.jsx'));
@@ -40,6 +43,21 @@ const routes = [
   {
     path: '/events/:eventId',
     element: EventDetailPage,
+    allowedRoles: ['student', 'admin', 'organizer', 'club'],
+  },
+  {
+    path: '/project/:id',
+    element: ProjectDetailPage,
+    allowedRoles: ['student', 'admin', 'organizer', 'club'],
+  },
+  {
+    path: '/internship/:id',
+    element: InternshipDetailPage,
+    allowedRoles: ['student', 'admin', 'organizer', 'club'],
+  },
+  {
+    path: '/startup/:id',
+    element: StartupDetailPage,
     allowedRoles: ['student', 'admin', 'organizer', 'club'],
   },
   {

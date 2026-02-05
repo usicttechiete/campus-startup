@@ -9,6 +9,19 @@ const getFeedController = async (req, res) => {
   }
 };
 
+const getPostByIdController = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const post = await feedService.getPostById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    return res.status(200).json(post);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 const createPostController = async (req, res) => {
   try {
     const newPost = await feedService.createPost(req.user.id, req.body);
@@ -41,6 +54,7 @@ const deletePostController = async (req, res) => {
 
 module.exports = {
   getFeedController,
+  getPostByIdController,
   createPostController,
   joinPostController,
   deletePostController,

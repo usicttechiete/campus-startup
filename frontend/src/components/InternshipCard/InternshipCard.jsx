@@ -158,33 +158,40 @@ const InternshipCard = ({
       )}
 
       {/* Actions */}
-      <form onSubmit={handleSubmit} className="space-y-2 pt-2 border-t border-divider">
-        <div className="flex gap-2">
-          <input
-            type="url"
-            required
-            placeholder="Paste resume link..."
-            value={resumeValue}
-            onChange={handleResumeInputChange}
-            disabled={isApplied}
-            className="input text-xs flex-1"
-          />
-          <Button
-            type="submit"
-            variant={isApplied ? 'ghost' : 'primary'}
-            size="sm"
-            disabled={isApplied || applyLoading}
-          >
-            {applyLoading ? (
-              <Loader size="sm" inline />
-            ) : isApplied ? (
-              'Applied ✓'
-            ) : (
-              'Apply'
-            )}
+      <div className="space-y-3 pt-2 border-t border-divider">
+        {onViewDetails && (
+          <Button type="button" variant="subtle" size="sm" onClick={() => onViewDetails(internship)} className="w-fit">
+            View details
           </Button>
-        </div>
-      </form>
+        )}
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              required
+              placeholder="Paste resume link..."
+              value={resumeValue}
+              onChange={handleResumeInputChange}
+              disabled={isApplied}
+              className="input text-xs flex-1"
+            />
+            <Button
+              type="submit"
+              variant={isApplied ? 'ghost' : 'primary'}
+              size="sm"
+              disabled={isApplied || applyLoading}
+            >
+              {applyLoading ? (
+                <Loader size="sm" inline />
+              ) : isApplied ? (
+                'Applied ✓'
+              ) : (
+                'Apply'
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </Card>
   );
 };

@@ -9,6 +9,19 @@ const getFeed = async (filters) => {
   }
 };
 
+const getPostById = async (postId) => {
+  if (!postId) {
+    throw new Error('Post ID is required');
+  }
+
+  try {
+    const post = await Post.findById(postId);
+    return post;
+  } catch (error) {
+    throw new Error(`Error fetching post: ${error.message}`);
+  }
+};
+
 const createPost = async (authorId, postDetails) => {
   const { title, description, stage, required_skills, post_type = 'startup_idea' } = postDetails;
 
@@ -90,5 +103,6 @@ module.exports = {
   getFeed,
   createPost,
   joinPost,
+  getPostById,
   deletePost,
 };

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CommentSection from '../CommentSection/CommentSection.jsx';
 import { getLikeInfo, toggleLike } from '../../services/like.api.js';
 import { deleteFeedPost } from '../../services/feed.api.js';
@@ -47,6 +48,7 @@ const stageColors = {
 };
 
 const PostCard = ({ post, onPostDeleted }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -65,6 +67,7 @@ const PostCard = ({ post, onPostDeleted }) => {
     authorProfile,
     title,
     description,
+    post_type: postType,
     stage,
     required_skills: requiredSkills,
     image_url: imageUrl,
@@ -134,6 +137,11 @@ const PostCard = ({ post, onPostDeleted }) => {
     }
     setDeleteLoading(false);
     setShowMenu(false);
+  };
+
+  const handleViewProject = () => {
+    if (!actualPostId) return;
+    navigate(`/project/${actualPostId}`);
   };
 
   return (
@@ -237,6 +245,15 @@ const PostCard = ({ post, onPostDeleted }) => {
           <CommentIcon className="w-4 h-4" />
           <span>Comment</span>
         </button>
+
+        {postType === 'project' && (
+          <button
+            onClick={handleViewProject}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 transition"
+          >
+            <span>View</span>
+          </button>
+        )}
 
         <button
           onClick={handleShare}

@@ -193,3 +193,70 @@ GitHub: https://github.com/Tabish7838/campus-startup-network.git
 - Uses existing Supabase RLS and authentication
 - Component is ready for future extensions (comments, reactions, etc.)
 - Code is production-ready with proper error handling and loading states
+
+## Admin Internship/Job Editing Status (Feb 6 2026)
+
+### Current Capabilities
+- **Admins can**: Create jobs/internships, view applicants, update application status
+- **Admins cannot**: Edit existing job details (title, description, type, etc.)
+
+### What's Missing for Edit Functionality
+- **Backend**: No `updateJob`/`patchJob` endpoint
+- **Frontend**: No edit UI in the Hire page
+
+### Available Foundation
+- **Backend**: `hire.middleware.js` allows admins and approved startups to access hire routes
+- **Frontend**: `Hire.jsx` shows job details but no edit button/form
+
+### Required Implementation
+1. **Backend Changes**:
+   - Add `update` method to Job model
+   - Add `updateJob` function to hiring service
+   - Add `updateJobController` 
+   - Add `PATCH /api/hire/jobs/:id` route
+
+2. **Frontend Changes**:
+   - Add edit button and form for selected job in Hire page
+   - Add `updateJob` helper to API client
+
+### Current Routes
+- `POST /api/hire/jobs` - Create job (admin/approved startup)
+- `GET /api/hire/jobs/:id/apps` - Get applicants for job
+- `PATCH /api/hire/apps/:id` - Update application status
+- **Missing**: `PATCH /api/hire/jobs/:id` - Update job details
+
+### Access Control
+- Admins have full access to hire routes
+- Approved startup founders can post/manage jobs
+- Role-based access controlled by `hire.middleware.js`
+
+## Project Analysis Summary & Suggested Updates (Feb 6 2026)
+
+### Quick Structure Summary
+- **Backend**: Express app (`app.js`) with modular routes/controllers/services and Supabase models. Entry point is `server.js`.
+- **Frontend**: React + Vite with context providers in `main.jsx`, main router in `App.jsx`, and modular pages/components.
+- **Docs**: Multiple markdown files describe intended behavior, feature updates, and schema migrations.
+
+### Suggested Updates & Fixes
+1. **Resolve Role/Startup contradictions**
+   - `STARTUP_ROLE_REMOVAL_SUMMARY.md` claims only `student`/`admin` roles exist, but current code still has startup flows (`startup.routes.js`, `admin.startup.routes.js`, startup approval UI, etc.).
+   - Decide whether startups are a feature or removed; then align code + docs accordingly.
+
+2. **Remove duplicate route registration (backend)**
+   - `app.js` registers `user.routes` twice: `app.use('/api/users', userRoutes);` and again on line 37. This is redundant and can cause confusion.
+
+3. **Unify router source of truth (frontend)**
+   - Both `src/app/App.jsx` and `src/app/routes.jsx` define route maps. Confirm which file is authoritative and delete or consolidate the unused one to avoid drift.
+
+4. **Update documentation to reflect real API paths**
+   - `PROJECT_ANALYSIS.md` lists internship endpoints as `/api/internships/jobs` and `/api/internships/apply`, but actual routes are `/api/internships` and `/api/internships/:id/apply`.
+   - Update the doc to avoid new devs implementing incorrect API calls.
+
+5. **Add job edit support (if required)**
+   - Hire flow allows create + applicant status updates but no job editing. If admins need edits, add `PATCH /api/hire/jobs/:id` and frontend edit UI.
+
+6. **Add missing `project` detail linkage in lists**
+   - Project detail routes are present; ensure all project cards/suggestions link to `/project/:id` (feed, profile, suggestions) to keep UX consistent.
+
+7. **Consider moving animated styles to Tailwind or global CSS**
+   - Inline `styled-jsx` was removed in `OnlineStatusDot`. If more custom animations appear, standardize them in global CSS or Tailwind config.

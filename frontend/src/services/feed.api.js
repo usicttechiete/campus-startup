@@ -2,6 +2,8 @@ import { apiFetch } from './apiClient.js';
 
 export const fetchFeed = (params) => apiFetch('/api/feed/posts', { params });
 
+export const fetchFeedPostById = (postId) => apiFetch(`/api/feed/posts/${postId}`);
+
 export const createFeedPost = (payload) =>
   apiFetch('/api/feed/posts', {
     method: 'POST',

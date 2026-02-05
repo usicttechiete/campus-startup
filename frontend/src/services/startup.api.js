@@ -2,6 +2,8 @@ import { apiFetch } from './apiClient.js';
 
 export const getMyStartup = () => apiFetch('/api/startups/me');
 
+export const fetchStartupById = (startupId) => apiFetch(`/api/startups/${startupId}`);
+
 export const createStartup = (payload) =>
   apiFetch('/api/startups', {
     method: 'POST',
