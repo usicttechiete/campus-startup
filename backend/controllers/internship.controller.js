@@ -33,8 +33,21 @@ const applyToInternshipController = async (req, res) => {
   }
 };
 
+const getMyApplicationsController = async (req, res) => {
+  try {
+    console.log('getMyApplicationsController: user', req.user.id);
+    const applications = await hiringService.getUserApplications(req.user.id);
+    console.log('getMyApplicationsController: results count', applications?.length);
+    res.status(200).json({ results: applications });
+  } catch (error) {
+    console.error('getMyApplicationsController error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getInternshipsController,
   getInternshipByIdController,
   applyToInternshipController,
+  getMyApplicationsController,
 };

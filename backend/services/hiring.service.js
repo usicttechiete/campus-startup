@@ -71,6 +71,17 @@ const getApplicantsForJob = async (jobId) => {
   }
 };
 
+const getUserApplications = async (applicantId) => {
+  try {
+    console.log('hiringService.getUserApplications: fetching for', applicantId);
+    const applications = await Application.findByApplicantId(applicantId);
+    console.log('hiringService.getUserApplications: found', applications?.length);
+    return applications;
+  } catch (error) {
+    throw new Error(`Error fetching user applications: ${error.message}`);
+  }
+};
+
 const updateApplication = async (applicationId, status) => {
   if (!status) {
     throw new Error('Status is required for updating an application');
@@ -90,5 +101,6 @@ module.exports = {
   createJob,
   applyForJob,
   getApplicantsForJob,
+  getUserApplications,
   updateApplication,
 };

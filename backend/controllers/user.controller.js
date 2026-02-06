@@ -50,7 +50,7 @@ const updateProfile = async (req, res) => {
     console.log("REQ BODY 👉", req.body);
     console.log("RAW KEYS 👉", Object.keys(req.body));
 
-    const { name, college, course, branch, year, role, about, bio, skills, admin_about, admin_skills } = req.body;
+    const { name, college, course, branch, year, role, about, bio, skills, admin_about, admin_skills, resume_link } = req.body;
 
     const updateData = {};
 
@@ -60,6 +60,7 @@ const updateProfile = async (req, res) => {
     if (branch !== undefined) updateData.branch = branch;
     if (year !== undefined) updateData.year = year;
     if (skills !== undefined) updateData.skills = skills;
+    if (resume_link !== undefined) updateData.resume_link = resume_link;
     if (about !== undefined) updateData.about = about;
     else if (bio !== undefined) updateData.about = bio;
 
@@ -133,7 +134,7 @@ const requestAdminUpgrade = async (req, res) => {
 
     // Check if user is already an admin
     if (userProfile.role === 'admin') {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: 'You are already an admin!',
         success: true,
         profile: userProfile
@@ -150,9 +151,9 @@ const requestAdminUpgrade = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       message: `Error processing admin upgrade: ${error.message}`,
-      success: false 
+      success: false
     });
   }
 };
@@ -170,7 +171,7 @@ const requestStudentUpgrade = async (req, res) => {
 
     // Check if user is already a student
     if (userProfile.role === 'student') {
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: 'You are already registered as a student!',
         success: true,
         profile: userProfile
@@ -196,9 +197,9 @@ const requestStudentUpgrade = async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       message: `Error processing student upgrade: ${error.message}`,
-      success: false 
+      success: false
     });
   }
 };

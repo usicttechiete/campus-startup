@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useRole } from '../../context/RoleContext.jsx';
 import { useOnlineStatus, useAvailability } from '../../hooks/useOnlineStatus.js';
 import { fetchFeed, createFeedPost } from '../../services/feed.api.js';
+import { fetchMyApplications } from '../../services/internship.api.js';
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
@@ -160,6 +161,14 @@ const StudentProfile = () => {
   const [startupSubmitLoading, setStartupSubmitLoading] = useState(false);
   const [startupSubmitError, setStartupSubmitError] = useState('');
 
+  // Applied Section States
+  const [myApplications, setMyApplications] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [isEditingResume, setIsEditingResume] = useState(false);
+  const [resumeInput, setResumeInput] = useState('');
+  const [resumeLoading, setResumeLoading] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+
   const normalizeSkills = (skills) => skills.map((skill) => skill.trim()).filter(Boolean);
   const skillsFingerprint = (skills) => normalizeSkills(skills).map((skill) => skill.toLowerCase()).sort().join('|');
 
@@ -216,6 +225,39 @@ const StudentProfile = () => {
     }
   };
 
+  const loadApplications = async () => {
+    setApplicationsLoading(true);
+    try {
+      const data = await fetchMyApplications();
+      console.log('STUDENT_PROFILE: My Applications raw data:', data);
+      setMyApplications(data?.results || []);
+    } catch (err) {
+      console.error('Failed to load applications:', err);
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
+  const handleSaveResume = async () => {
+    const trimmed = resumeInput.trim();
+    if (trimmed && !/^https?:\/\/.+/.test(trimmed)) {
+      setResumeError('Please enter a valid URL (starting with http:// or https://)');
+      return;
+    }
+
+    setResumeLoading(true);
+    setResumeError('');
+    try {
+      const updatedProfile = await updateProfile({ resume_link: trimmed });
+      setProfile(updatedProfile);
+      setIsEditingResume(false);
+    } catch (err) {
+      setResumeError(err.message || 'Failed to update resume link');
+    } finally {
+      setResumeLoading(false);
+    }
+  };
+
   const handleDeactivateStartup = async () => {
     const confirmed = window.confirm('Deactivate your startup? This will remove it from your profile.');
     if (!confirmed) return;
@@ -238,14 +280,27 @@ const StudentProfile = () => {
 
   useEffect(() => {
     loadProfile();
+    loadApplications();
   }, []);
+
+  useEffect(() => {
+    if (profile?.resume_link) {
+      setResumeInput(profile.resume_link);
+    }
+  }, [profile?.resume_link]);
 
   const tabsToRender = useMemo(() => {
     if (role === 'student') {
-      return [...tabConfig, { key: 'startup', label: 'Add Your Startup' }];
+      return [...tabConfig, { key: 'applied', label: 'Applied' }, { key: 'startup', label: 'Add Your Startup' }];
     }
     return tabConfig;
-  }, [role]);
+  }, [role, tabConfig]);
+
+  useEffect(() => {
+    if (activeTab === 'applied') {
+      loadApplications();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (role !== 'student' && activeTab === 'startup') {
@@ -1000,6 +1055,155 @@ const StudentProfile = () => {
             )}
           </div>
         );
+      case 'applied':
+        return (
+          <div className="space-y-6">
+            {/* Resume Section */}
+            <div className="space-y-3">
+              <div
+                className="flex cursor-pointer items-center justify-between rounded-2xl border border-border/60 bg-surface p-4 transition hover:bg-surface/80"
+                onClick={() => setIsEditingResume(!isEditingResume)}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">📄</span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-body">Your Resume</h3>
+                    <p className="text-xs text-muted">
+                      {profile?.resume_link ? 'Link added' : 'No resume link added yet'}
+                    </p>
+                  </div>
+                </div>
+                <motion.span
+                  animate={{ rotate: isEditingResume ? 180 : 0 }}
+                  className="text-muted"
+                >
+                  ▼
+                </motion.span>
+              </div>
+
+              {isEditingResume && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-3 overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm"
+                >
+                  <p className="text-xs text-muted mb-2">Provide a public link to your resume (Drive, Dropbox, etc.)</p>
+                  <input
+                    value={resumeInput}
+                    onChange={(e) => {
+                      setResumeInput(e.target.value);
+                      setResumeError('');
+                    }}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full rounded-xl border border-border bg-surface px-4 py-2 text-sm outline-none transition focus:ring-2 focus:ring-primary"
+                  />
+                  {resumeError && <p className="text-xs text-danger">{resumeError}</p>}
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={handleSaveResume}
+                      disabled={resumeLoading}
+                    >
+                      {resumeLoading ? <Loader size="sm" inline /> : 'Save Link'}
+                    </Button>
+                    {profile?.resume_link && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        as="a"
+                        href={profile.resume_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View Current
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Internships Section */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-body px-1">Applied Internships</h3>
+              {applicationsLoading ? (
+                <div className="flex justify-center p-8">
+                  <Loader />
+                </div>
+              ) : myApplications.length ? (
+                <div className="space-y-3">
+                  {myApplications.map((app) => (
+                    <Card
+                      key={app.id}
+                      className="space-y-2 border border-border/60 bg-card p-5 shadow-sm transition hover:shadow-md"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-body">{app.job?.role_title || 'Internship'}</p>
+                          <p className="text-xs text-muted">{app.job?.company_name || 'Project Team'}</p>
+                        </div>
+                        <Badge
+                          variant={
+                            app.status === 'Accepted'
+                              ? 'success'
+                              : app.status === 'Rejected'
+                                ? 'danger'
+                                : 'primary'
+                          }
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                        >
+                          {app.status}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-2 rounded-xl bg-surface/50 p-3">
+                        {app.status === 'Accepted' ? (
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-success">
+                              🎉 Congratulations! You have been selected.
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-muted">
+                              The admin will contact you shortly on your registered email id.
+                            </p>
+                          </div>
+                        ) : app.status === 'Rejected' ? (
+                          <div className="space-y-1">
+                            <p className="text-xs font-medium text-danger">
+                              Sorry, your application has been rejected.
+                            </p>
+                            {app.rejection_reason && (
+                              <p className="text-[11px] leading-relaxed text-muted">
+                                <span className="font-semibold">Reason:</span> {app.rejection_reason}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted italic">
+                            Applied for, please wait for updates.
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border p-8 text-center">
+                  <p className="text-sm text-muted">You haven't applied to any internships yet.</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 text-primary"
+                    onClick={() => navigate('/hire')}
+                  >
+                    Browse Internships
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
       case 'events':
         return (
           <div className="space-y-3 text-sm text-muted">
@@ -1447,8 +1651,8 @@ const StudentProfile = () => {
                 type="button"
                 onClick={() => setActivityTab('projects')}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'projects'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
                   }`}
               >
                 Projects Posted
@@ -1457,8 +1661,8 @@ const StudentProfile = () => {
                 type="button"
                 onClick={() => setActivityTab('updates')}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'updates'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
                   }`}
               >
                 Updates Posted

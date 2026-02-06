@@ -9,3 +9,5 @@ export const applyToInternship = (internshipId, payload) =>
     method: 'POST',
     data: payload,
   });
+
+export const fetchMyApplications = () => apiFetch('/api/internships/my/applications');

@@ -6,11 +6,12 @@ import Badge from '../../components/Badge/Badge.jsx';
 import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import { getMe, updateProfile, requestStudentUpgrade } from '../../services/user.api.js';
+import { fetchInternships } from '../../services/internship.api.js';
 import { formatLevel, formatTrustScore } from '../../utils/formatters.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useRole } from '../../context/RoleContext.jsx';
-import { fetchFeed, createFeedPost } from '../../services/feed.api.js';
-import PostCard from '../../components/PostCard/PostCard.jsx';
+import OnlineStatusDot from '../../components/OnlineStatusDot/OnlineStatusDot.jsx';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus.js';
 
 const tabConfig = [
   { key: 'about', label: 'About' },
@@ -18,14 +19,6 @@ const tabConfig = [
   { key: 'teams', label: 'Internships Posted' },
   { key: 'events', label: 'Events Hosted' },
 ];
-
-const initialFormState = {
-  title: '',
-  description: '',
-  stage: 'Ideation',
-  required_skills: '',
-  post_type: 'project',
-};
 
 // Icons
 const PlusIcon = ({ className }) => (
@@ -85,23 +78,12 @@ const AdminProfile = () => {
   const [studentUpgradeMessage, setStudentUpgradeMessage] = useState('');
   const [studentUpgradeSuccess, setStudentUpgradeSuccess] = useState(false);
 
-  // Activity Section States
-  const [activityTab, setActivityTab] = useState('projects'); // 'projects' | 'updates'
-  const [activityPosts, setActivityPosts] = useState([]);
-  const [activityLoading, setActivityLoading] = useState(false);
-  const [activityError, setActivityError] = useState('');
+  // Internships State
+  const [postedInternships, setPostedInternships] = useState([]);
+  const [internshipsLoading, setInternshipsLoading] = useState(false);
 
-  // Create Post States
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(initialFormState);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState(null);
-
-  const postTypes = [
-    { label: 'Project', value: 'project' },
-    { label: 'Update', value: 'work_update' },
-    { label: 'Idea', value: 'startup_idea' },
-  ];
+  // Online status hook
+  const { isOnline } = useOnlineStatus(profile?.id);
 
   const getDisplayName = (currentProfile) => {
     if (currentProfile?.name) return currentProfile.name;
@@ -220,35 +202,24 @@ const AdminProfile = () => {
   useEffect(() => {
     if (!profile?.id) return;
 
-    const loadActivity = async () => {
-      setActivityLoading(true);
-      setActivityError('');
+    const loadInternships = async () => {
+      setInternshipsLoading(true);
       try {
-        const data = await fetchFeed({ author_id: profile.id });
-        setActivityPosts(data?.results || []);
+        // Fetch internships where the current user (admin) is the creator (company_id)
+        // Note: The backend hire controller uses req.user.id as company_id when creating,
+        // so we filter by company_id here.
+        const data = await fetchInternships({ company_id: profile.id });
+        setPostedInternships(data?.results || []);
       } catch (err) {
-        setActivityError('Failed to load activity');
         // eslint-disable-next-line no-console
-        console.error(err);
+        console.error('Failed to load internships:', err);
       } finally {
-        setActivityLoading(false);
+        setInternshipsLoading(false);
       }
     };
 
-    loadActivity();
+    loadInternships();
   }, [profile?.id]);
-
-  useEffect(() => {
-    if (profile?.name) {
-      setNameInput(profile.name);
-    }
-
-    if (profile) {
-      setAboutInput(profile.admin_about || '');
-      const nextSkills = Array.isArray(profile.admin_skills) ? profile.admin_skills : [];
-      setSkillsDraft(nextSkills);
-    }
-  }, [profile]);
 
   const normalizeSkills = (skills) => skills.map((skill) => skill.trim()).filter(Boolean);
   const skillsFingerprint = (skills) => normalizeSkills(skills).map((skill) => skill.toLowerCase()).sort().join('|');
@@ -296,18 +267,34 @@ const AdminProfile = () => {
     return [];
   }, [profile]);
 
-  const { projectsPosted, updatesPosted } = useMemo(() => {
-    const projects = [];
-    const updates = [];
-    activityPosts.forEach((post) => {
-      if (post.post_type === 'project' || post.post_type === 'startup_idea') {
-        projects.push(post);
-      } else if (post.post_type === 'work_update') {
-        updates.push(post);
+  const handleStudentUpgrade = async () => {
+    setStudentUpgradeLoading(true);
+    setStudentUpgradeMessage('');
+    setStudentUpgradeSuccess(false);
+    setError(null);
+
+    try {
+      const response = await requestStudentUpgrade();
+      setStudentUpgradeMessage(response.message);
+      setStudentUpgradeSuccess(response.success);
+
+      if (response.success) {
+        // Update the profile with the new role
+        setProfile(response.profile);
+        // Refresh the role context
+        if (refreshRole) {
+          await refreshRole();
+        }
+        // Reload the profile to get updated data
+        await loadProfile();
       }
-    });
-    return { projectsPosted: projects, updatesPosted: updates };
-  }, [activityPosts]);
+    } catch (err) {
+      setStudentUpgradeMessage(err.message || 'Failed to process student upgrade request');
+      setStudentUpgradeSuccess(false);
+    } finally {
+      setStudentUpgradeLoading(false);
+    }
+  };
 
   const tabContent = useMemo(() => {
     if (!profile) return null;
@@ -381,15 +368,24 @@ const AdminProfile = () => {
       case 'teams':
         return (
           <div className="space-y-3">
-            {teamsJoined.length ? (
-              teamsJoined.map((team) => (
+            {internshipsLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader size="sm" />
+              </div>
+            ) : postedInternships.length ? (
+              postedInternships.map((internship) => (
                 <div
-                  key={team.id || team.team_id || team.name}
+                  key={internship.id}
                   className="rounded-2xl bg-card border border-border p-4 transition duration-200 hover:shadow-md hover:scale-[1.01]"
                 >
-                  <p className="text-body font-semibold mb-2">{team.name || team.team_name}</p>
-                  {team.event_name && <p className="text-xs text-muted mb-1">Event: {team.event_name}</p>}
-                  {team.role && <p className="text-xs text-muted">Role: {team.role}</p>}
+                  <p className="text-body font-semibold mb-2">{internship.role_title}</p>
+                  <p className="text-xs text-muted mb-1 line-clamp-2">{internship.description}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="neutral" className="bg-surface/50 text-[10px]">
+                      {internship.type}
+                    </Badge>
+                    {/* Add more details if available, like applicants count */}
+                  </div>
                 </div>
               ))
             ) : (
@@ -476,81 +472,9 @@ const AdminProfile = () => {
     skillsDraft,
     skillsError,
     skillsLoading,
+    internshipsLoading,
+    postedInternships,
   ]);
-
-  // Create Post Handlers
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    setFormLoading(true);
-    setFormError(null);
-    try {
-      const postData = {
-        title: form.title,
-        description: form.description,
-        post_type: form.post_type,
-      };
-      if (form.post_type !== 'work_update') {
-        postData.stage = form.stage;
-        postData.required_skills = form.required_skills.split(',').map(s => s.trim()).filter(Boolean);
-      }
-      const newPost = await createFeedPost(postData);
-
-      // Optimistic update
-      setActivityPosts((prev) => [newPost, ...prev]);
-
-      setShowForm(false);
-      setForm(initialFormState);
-
-      // Switch tab to the relevant one
-      if (form.post_type === 'work_update') {
-        setActivityTab('updates');
-      } else {
-        setActivityTab('projects');
-      }
-    } catch (err) {
-      setFormError(err.message || 'Failed to create post');
-    }
-    setFormLoading(false);
-  };
-
-  const getFormTitle = () => {
-    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
-    return types[form.post_type] || 'Create Post';
-  };
-
-  const handleStudentUpgrade = async () => {
-    setStudentUpgradeLoading(true);
-    setStudentUpgradeMessage('');
-    setStudentUpgradeSuccess(false);
-    setError(null);
-
-    try {
-      const response = await requestStudentUpgrade();
-      setStudentUpgradeMessage(response.message);
-      setStudentUpgradeSuccess(response.success);
-
-      if (response.success) {
-        // Update the profile with the new role
-        setProfile(response.profile);
-        // Refresh the role context
-        if (refreshRole) {
-          await refreshRole();
-        }
-        // Reload the profile to get updated data
-        await loadProfile();
-      }
-    } catch (err) {
-      setStudentUpgradeMessage(err.message || 'Failed to process student upgrade request');
-      setStudentUpgradeSuccess(false);
-    } finally {
-      setStudentUpgradeLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -579,14 +503,19 @@ const AdminProfile = () => {
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-1 items-start gap-4">
-              <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-md">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-3xl font-bold text-white">
-                    {getDisplayName(profile)[0]?.toUpperCase()}
-                  </div>
-                )}
+              <div className="relative">
+                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-2 border-primary/20 shadow-md">
+                  {profile.avatar_url ? (
+                    <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-primary-dark text-3xl font-bold text-white">
+                      {getDisplayName(profile)[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="absolute bottom-1 right-1">
+                  <OnlineStatusDot isOnline={isOnline} size="small" />
+                </div>
               </div>
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -708,8 +637,8 @@ const AdminProfile = () => {
               <p className="text-xs font-medium uppercase tracking-wide text-muted">Events Joined</p>
             </div>
             <div className="space-y-2 text-center">
-              <p className="text-2xl font-bold text-body">{profile.events_organized?.length || 0}</p>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted">Events Hosted</p>
+              <p className="text-2xl font-bold text-body">{postedInternships.length || 0}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">Internships Posted</p>
             </div>
           </div>
         </AnimatedCard>
@@ -753,8 +682,8 @@ const AdminProfile = () => {
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${tab.key === activeTab
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-surface text-muted hover:bg-primary/5 hover:text-body'
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-surface text-muted hover:bg-primary/5 hover:text-body'
                 }`}
             >
               {tab.label}
@@ -766,171 +695,6 @@ const AdminProfile = () => {
         </div>
       </AnimatedCard>
 
-      {/* Activity Section */}
-      <AnimatedCard delay={0.4}>
-        <Card className="space-y-5 border border-border/60 bg-card p-5 shadow-sm transition-shadow duration-200 hover:shadow-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActivityTab('projects')}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'projects'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
-                  }`}
-              >
-                Projects Posted
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivityTab('updates')}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-200 active:scale-[0.97] ${activityTab === 'updates'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
-                  }`}
-              >
-                Updates Posted
-              </button>
-            </div>
-            {role === 'admin' && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary text-sm font-semibold rounded-full hover:bg-primary/20 transition active:scale-95"
-              >
-                <PlusIcon className="w-4 h-4" />
-                Add
-              </button>
-            )}
-          </div>
-
-          <div className="rounded-3xl border border-border/60 bg-card p-4 shadow-sm min-h-[200px]">
-            {activityLoading ? (
-              <div className="flex justify-center py-10">
-                <Loader label="Loading activity..." />
-              </div>
-            ) : activityError ? (
-              <p className="text-center text-sm text-danger">{activityError}</p>
-            ) : (
-              <div className="space-y-4">
-                {activityTab === 'projects' ? (
-                  projectsPosted.length > 0 ? (
-                    projectsPosted.map((post) => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onPostDeleted={(deletedId) => {
-                          setActivityPosts((prev) => prev.filter((p) => p.id !== deletedId && p.post_id !== deletedId));
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-center text-sm text-muted py-8">No projects posted yet.</p>
-                  )
-                ) : (
-                  updatesPosted.length > 0 ? (
-                    updatesPosted.map((post) => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        onPostDeleted={(deletedId) => {
-                          setActivityPosts((prev) => prev.filter((p) => p.id !== deletedId && p.post_id !== deletedId));
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-center text-sm text-muted py-8">No updates posted yet.</p>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        </Card>
-      </AnimatedCard>
-
-      {/* Create Post Modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border/40">
-              <h2 className="text-lg font-bold text-body">{getFormTitle()}</h2>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-full hover:bg-surface">
-                <CloseIcon className="w-5 h-5 text-muted" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleCreatePost} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-              {/* Post Type */}
-              <div className="flex gap-2">
-                {postTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, post_type: type.value }))}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${form.post_type === type.value
-                      ? 'bg-primary text-white'
-                      : 'bg-surface text-muted hover:bg-surface/80 hover:text-body'
-                      }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Title */}
-              <input
-                name="title"
-                required
-                value={form.title}
-                onChange={handleFormChange}
-                placeholder={form.post_type === 'work_update' ? "What's the update?" : "Project Title"}
-                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-              />
-
-              {/* Description */}
-              <textarea
-                name="description"
-                rows={3}
-                required
-                value={form.description}
-                onChange={handleFormChange}
-                placeholder="Tell us more..."
-                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm resize-none outline-none focus:ring-2 focus:ring-primary"
-              />
-
-              {/* Stage & Skills */}
-              {form.post_type !== 'work_update' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <select
-                    name="stage"
-                    value={form.stage}
-                    onChange={handleFormChange}
-                    className="rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="Ideation">Ideation</option>
-                    <option value="MVP">MVP</option>
-                    <option value="Scaling">Scaling</option>
-                  </select>
-                  <input
-                    name="required_skills"
-                    value={form.required_skills}
-                    onChange={handleFormChange}
-                    placeholder="Skills (comma sep)"
-                    className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              )}
-
-              {formError && <p className="text-sm text-danger">{formError}</p>}
-
-              <Button type="submit" variant="primary" className="w-full" disabled={formLoading}>
-                {formLoading ? <Loader size="sm" inline /> : 'Publish'}
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ const internshipController = require('../controllers/internship.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 
 router.get('/', authMiddleware, internshipController.getInternshipsController);
+router.get('/my/applications', authMiddleware, internshipController.getMyApplicationsController);
 router.get('/:id', authMiddleware, internshipController.getInternshipByIdController);
 router.post('/:id/apply', authMiddleware, internshipController.applyToInternshipController);
 

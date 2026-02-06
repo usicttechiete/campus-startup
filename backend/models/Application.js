@@ -16,6 +16,27 @@ const Application = {
     return data;
   },
 
+  async findByApplicantId(applicantId) {
+    console.log('Application.findByApplicantId: applicantId', applicantId);
+    const { data, error } = await supabase
+      .from('applications')
+      .select(`
+        *,
+        job:jobs(*)
+      `)
+      .eq('applicant_id', applicantId)
+      .order('created_at', { ascending: false });
+
+    console.log('Application.findByApplicantId raw result:', { data, error });
+
+    if (error) {
+      console.error('Application.findByApplicantId error:', error);
+      throw new Error(error.message);
+    }
+    console.log('Application.findByApplicantId: data length', data?.length);
+    return data;
+  },
+
   async create(applicationData) {
     const { data, error } = await supabase.from('applications').insert(applicationData).select().single();
     if (error) {
