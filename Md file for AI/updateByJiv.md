@@ -260,3 +260,25 @@ GitHub: https://github.com/Tabish7838/campus-startup-network.git
 
 7. **Consider moving animated styles to Tailwind or global CSS**
    - Inline `styled-jsx` was removed in `OnlineStatusDot`. If more custom animations appear, standardize them in global CSS or Tailwind config.
+
+## Bug Fix: GET /api/internships/my/applications — applications.created_at does not exist (Feb 7 2026)
+
+### Problem
+- **Endpoint**: `GET /api/internships/my/applications`
+- **Error**: `column applications.created_at does not exist`
+- **Cause**: `Application.findByApplicantId` in `backend/models/Application.js` used `.order('created_at', { ascending: false })`, but the `applications` table has no `created_at` column.
+
+### Schema Check
+From `backend/debug-output.txt`, the `applications` table columns include: `id`, `applicant_id`, `job_id`, `status`, `submitted_at`, `rejection_reason`. The timestamp column is `submitted_at`, not `created_at`.
+
+### Solution Applied (Solution 1 — Fix the backend query)
+- **File**: `backend/models/Application.js`
+- **Change**: Replaced `.order('created_at', { ascending: false })` with `.order('submitted_at', { ascending: false })` in `findByApplicantId`.
+- **Rationale**: `submitted_at` is the existing timestamp column and is the appropriate field for ordering by application submission time.
+
+### Alternatives Considered
+- **Solution 2 (add created_at column)**: Not needed; `submitted_at` already exists and is semantically correct.
+- **Solution 3 (migration check)**: Not applicable; no ORM migrations; schema uses Supabase directly with `submitted_at`.
+
+### Verification
+Restart the backend and call `GET /api/internships/my/applications` while authenticated. The endpoint should return applications ordered by `submitted_at` (newest first) without errors.

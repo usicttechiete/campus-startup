@@ -25,7 +25,7 @@ const Application = {
         job:jobs(*)
       `)
       .eq('applicant_id', applicantId)
-      .order('created_at', { ascending: false });
+      .order('submitted_at', { ascending: false });
 
     console.log('Application.findByApplicantId raw result:', { data, error });
 
