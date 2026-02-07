@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Card from '../../components/Card/Card.jsx';
@@ -16,6 +16,7 @@ import { useRole } from '../../context/RoleContext.jsx';
 import { useOnlineStatus, useAvailability } from '../../hooks/useOnlineStatus.js';
 import { fetchFeed, createFeedPost } from '../../services/feed.api.js';
 import { fetchMyApplications } from '../../services/internship.api.js';
+import { getMyNotifications, markNotificationRead } from '../../services/notification.api.js';
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
@@ -23,6 +24,7 @@ const tabConfig = [
   { key: 'skills', label: 'Skills' },
   { key: 'teams', label: 'Teams Joined' },
   { key: 'events', label: 'Events' },
+  { key: 'notifications', label: 'Notifications' },
 ];
 
 const initialFormState = {
@@ -294,13 +296,38 @@ const StudentProfile = () => {
       return [...tabConfig, { key: 'applied', label: 'Applied' }, { key: 'startup', label: 'Add Your Startup' }];
     }
     return tabConfig;
-  }, [role, tabConfig]);
+  }, [role]);
+
+  // Notifications section state
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState('');
 
   useEffect(() => {
     if (activeTab === 'applied') {
       loadApplications();
     }
   }, [activeTab]);
+
+  const loadNotifications = useCallback(async () => {
+    setNotificationsLoading(true);
+    setNotificationsError('');
+    try {
+      const res = await getMyNotifications();
+      setNotifications(Array.isArray(res?.results) ? res.results : []);
+    } catch (err) {
+      setNotificationsError(err?.message || 'Failed to load notifications');
+      setNotifications([]);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'notifications') {
+      loadNotifications();
+    }
+  }, [activeTab, loadNotifications]);
 
   useEffect(() => {
     if (role !== 'student' && activeTab === 'startup') {
@@ -1222,6 +1249,47 @@ const StudentProfile = () => {
             ) : (
               <p>No event participation recorded yet. Explore events to start building your track record.</p>
             )}
+          </div>
+        );
+      case 'notifications':
+        if (notificationsLoading) {
+          return (
+            <div className="py-6">
+              <Loader label="Loading notifications" />
+            </div>
+          );
+        }
+        if (notificationsError) {
+          return (
+            <Card className="border border-danger/20 bg-danger/5 text-danger">
+              <p className="text-sm">{notificationsError}</p>
+            </Card>
+          );
+        }
+        if (!notifications.length) {
+          return (
+            <p className="text-sm text-muted">No notifications yet. When someone taps &quot;Let&apos;s Build&quot; on your posts, they&apos;ll show up here.</p>
+          );
+        }
+        return (
+          <div className="space-y-2">
+            {notifications.map((n) => (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => {
+                  if (n.post_id) navigate(`/project/${n.post_id}`);
+                  if (!n.read_at) markNotificationRead(n.id).then(() => loadNotifications()).catch(() => {});
+                }}
+                className={`w-full rounded-xl border border-border/60 p-4 text-left transition hover:bg-surface/50 ${n.read_at ? 'bg-surface/30' : 'bg-primary/5 border-primary/20'}`}
+              >
+                <p className="text-sm font-medium text-body">{n.message}</p>
+                <p className="mt-1 text-xs text-muted">
+                  {n.created_at ? new Date(n.created_at).toLocaleDateString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                </p>
+                {n.post_id && <p className="mt-1 text-xs text-primary">View post →</p>}
+              </button>
+            ))}
           </div>
         );
       default:

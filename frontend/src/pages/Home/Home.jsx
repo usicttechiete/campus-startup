@@ -1,7 +1,8 @@
-import { Suspense, lazy, useEffect, useState, useMemo } from 'react';
+import { Suspense, lazy, useEffect, useState, useMemo, useCallback } from 'react';
 import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import PostCard from '../../components/PostCard/PostCard.jsx';
+import PullToRefresh from '../../components/PullToRefresh/PullToRefresh.jsx';
 import { createFeedPost } from '../../services/feed.api.js';
 import useFeedPosts from '../../hooks/useFeedPosts.js';
 
@@ -58,14 +59,6 @@ const Home = () => {
   const [formError, setFormError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Random positions for suggestion sections (calculated once per session)
-  const suggestionPositions = useMemo(() => {
-    // Jobs appears after post 1-2, Startups appears after post 3-5
-    const jobsPos = Math.floor(Math.random() * 2) + 1; // 1 or 2
-    const startupsPos = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-    return { jobs: jobsPos, startups: startupsPos };
-  }, []);
-
   useEffect(() => {
     loadPosts({ stage: 'all', post_type: 'project' });
   }, []);
@@ -73,6 +66,8 @@ const Home = () => {
   const handleFilterChange = (stageValue) => {
     loadPosts({ stage: stageValue });
   };
+
+  const handleRefresh = useCallback(() => loadPosts(), [loadPosts]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
@@ -108,13 +103,27 @@ const Home = () => {
     return types[form.post_type] || 'Create Post';
   };
 
-  // Render feed with suggestion sections inserted at random positions
+  // Client-side search filter: match title and description (case-insensitive)
+  const filteredPosts = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return posts;
+    return posts.filter(
+      (p) =>
+        (p.title && p.title.toLowerCase().includes(term)) ||
+        (p.description && p.description.toLowerCase().includes(term))
+    );
+  }, [posts, searchTerm]);
+
+  // Fixed positions: Jobs after 2nd post, Startups after 5th (predictable UX)
+  const suggestionPositions = { jobs: 2, startups: 5 };
+
+  // Render feed with suggestion sections inserted at fixed positions
   const renderFeed = () => {
     const elements = [];
     let jobsInserted = false;
     let startupsInserted = false;
 
-    posts.forEach((post, index) => {
+    filteredPosts.forEach((post, index) => {
       // Insert Jobs suggestions at designated position
       if (!jobsInserted && index === suggestionPositions.jobs) {
         elements.push(
@@ -136,19 +145,24 @@ const Home = () => {
       }
 
       elements.push(
-        <PostCard key={post.post_id || post.id} post={post} onPostDeleted={() => loadPosts()} />
+        <PostCard
+          key={post.post_id || post.id}
+          post={post}
+          onPostDeleted={() => loadPosts()}
+          onPostCollaborated={() => loadPosts()}
+        />
       );
     });
 
     // If we didn't have enough posts, still show suggestions at the end
-    if (!jobsInserted && posts.length >= 1) {
+    if (!jobsInserted && filteredPosts.length >= 1) {
       elements.push(
         <Suspense key="jobs-suggestions" fallback={null}>
           <JobsSuggestions />
         </Suspense>
       );
     }
-    if (!startupsInserted && posts.length >= 2) {
+    if (!startupsInserted && filteredPosts.length >= 2) {
       elements.push(
         <Suspense key="startups-suggestions" fallback={null}>
           <StartupsSuggestions />
@@ -225,7 +239,7 @@ const Home = () => {
       )}
 
       {/* Feed */}
-      {loading ? (
+      {loading && !posts.length ? (
         <div className="flex justify-center py-12">
           <Loader label="Loading feed" />
         </div>
@@ -233,14 +247,27 @@ const Home = () => {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
           {error}
         </div>
-      ) : posts.length > 0 ? (
-        <div className="space-y-4">{renderFeed()}</div>
       ) : (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-3">🌟</div>
-          <p className="text-gray-600 text-sm mb-4">No posts yet. Be the first!</p>
-          <Button onClick={() => setShowForm(true)}>Create Post</Button>
-        </div>
+        <PullToRefresh onRefresh={handleRefresh} disabled={loading}>
+          {posts.length > 0 ? (
+            filteredPosts.length > 0 ? (
+              <div className="space-y-4">{renderFeed()}</div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🔍</div>
+                <p className="text-gray-600 text-sm">No matches for &quot;{searchTerm}&quot;</p>
+                <p className="text-gray-500 text-xs mt-1">Try a different search term</p>
+              </div>
+            )
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">🌟</div>
+              <p className="text-gray-600 text-sm mb-2">No posts yet. Be the first!</p>
+              <p className="text-gray-500 text-xs mb-4">Share a project idea or post an update to get started.</p>
+              <Button onClick={() => setShowForm(true)}>Create Post</Button>
+            </div>
+          )}
+        </PullToRefresh>
       )}
 
       {/* Create Post Modal */}

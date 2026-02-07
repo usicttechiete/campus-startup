@@ -15,7 +15,12 @@ const Post = {
     }
 
     if (filters.post_type && filters.post_type !== 'all') {
-      query = query.eq('post_type', filters.post_type);
+      // "Projects" tab shows both project and startup_idea
+      if (filters.post_type === 'project') {
+        query = query.in('post_type', ['project', 'startup_idea']);
+      } else {
+        query = query.eq('post_type', filters.post_type);
+      }
     }
 
     if (filters.author_id) {

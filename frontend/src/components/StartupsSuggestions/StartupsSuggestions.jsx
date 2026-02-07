@@ -100,7 +100,7 @@ const StartupsSuggestions = () => {
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
                 </div>
                 <button onClick={() => navigate('/')} className="text-xs text-purple-600 font-medium">
-                    Explore →
+                    View all →
                 </button>
             </div>
 

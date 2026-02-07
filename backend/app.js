@@ -24,6 +24,7 @@ const trustRoutes = require('./routes/trust.routes.js');
 const commentRoutes = require('./routes/comment.routes.js');
 const likeRoutes = require('./routes/like.routes.js');
 const adminStartupRoutes = require('./routes/admin.startup.routes.js');
+const notificationRoutes = require('./routes/notification.routes.js');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/feed', feedRoutes);
@@ -37,6 +38,7 @@ app.use('/api', likeRoutes);
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/startups', require('./routes/startup.routes'));
 app.use('/api/admin', adminStartupRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', require('./routes/chatRoutes'));
 
 module.exports = app;

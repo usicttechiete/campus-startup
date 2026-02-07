@@ -66,18 +66,21 @@ const JobsSuggestions = () => {
                     subtitle: job.company_name || job.duration || 'Apply now',
                     gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
                     actionLabel: 'Apply',
-                    onClick: () => navigate('/internships'),
+                    onClick: () => (job.id ? navigate(`/internship/${job.id}`) : navigate('/internships')),
                 }));
 
-                const eventCards = events.slice(0, 2).map((event) => ({
-                    id: `event-${event.id || event.event_id}`,
-                    icon: CalendarIcon,
-                    title: event.title || event.name || 'Event',
-                    subtitle: event.date_range || 'Join now',
-                    gradient: 'bg-gradient-to-br from-green-500 to-teal-500',
-                    actionLabel: 'Join',
-                    onClick: () => navigate('/events'),
-                }));
+                const eventCards = events.slice(0, 2).map((event) => {
+                    const eventId = event.id || event.event_id;
+                    return {
+                        id: `event-${eventId}`,
+                        icon: CalendarIcon,
+                        title: event.title || event.name || 'Event',
+                        subtitle: event.date_range || 'Join now',
+                        gradient: 'bg-gradient-to-br from-green-500 to-teal-500',
+                        actionLabel: 'Join',
+                        onClick: () => (eventId ? navigate(`/events/${eventId}`) : navigate('/events')),
+                    };
+                });
 
                 setItems([...jobCards, ...eventCards]);
             } catch (e) {

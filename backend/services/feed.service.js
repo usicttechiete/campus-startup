@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const notificationService = require('./notification.service');
 
 const getFeed = async (filters) => {
   try {
@@ -67,8 +68,17 @@ const joinPost = async (postId, userId) => {
   }
 
   try {
+    const post = await Post.findById(postId);
+    if (!post) throw new Error('Post not found');
     await Post.addCollaborator(postId, userId);
-    // In a real application, you might also want to trigger a notification here.
+    if (post.author_id && post.author_id !== userId) {
+      await notificationService.createLetsBuildNotification(
+        post.author_id,
+        userId,
+        postId,
+        post.title
+      );
+    }
     return { message: 'Successfully joined post' };
   } catch (error) {
     throw new Error(`Error joining post: ${error.message}`);

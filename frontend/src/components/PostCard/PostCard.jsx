@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSection from '../CommentSection/CommentSection.jsx';
 import { getLikeInfo, toggleLike } from '../../services/like.api.js';
-import { deleteFeedPost } from '../../services/feed.api.js';
+import { deleteFeedPost, joinFeedPost } from '../../services/feed.api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useNotification } from '../../context/NotificationContext.jsx';
 import {
   formatName,
   formatRole,
@@ -41,21 +42,31 @@ const MoreIcon = ({ className }) => (
   </svg>
 );
 
+const ThumbsUpIcon = ({ filled, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+  </svg>
+);
+
 const stageColors = {
   Ideation: 'bg-gray-100 text-gray-600',
   MVP: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 border border-indigo-100/50',
   Scaling: 'bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700 border border-teal-100/50',
 };
 
-const PostCard = ({ post, onPostDeleted }) => {
+const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { notify } = useNotification();
   const [showComments, setShowComments] = useState(false);
+  const [showLetsBuildConfirm, setShowLetsBuildConfirm] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [collabLoading, setCollabLoading] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false);
 
   if (!post) return null;
 
@@ -76,6 +87,10 @@ const PostCard = ({ post, onPostDeleted }) => {
 
   const actualPostId = postId || post_id;
   const isOwner = user && authorId && user.id === authorId;
+  const collaborators = post.collaborators || [];
+  const isCollaborator =
+    hasJoined ||
+    (user?.id && collaborators.some((c) => c.user_id === user.id || c.user?.id === user.id));
   const authorData = author || authorProfile;
 
   const displayName = formatName(authorData?.name) || 'Anonymous';
@@ -89,6 +104,13 @@ const PostCard = ({ post, onPostDeleted }) => {
   useEffect(() => {
     if (actualPostId) loadLikeInfo();
   }, [actualPostId]);
+
+  useEffect(() => {
+    if (user?.id && Array.isArray(post?.collaborators)) {
+      const joined = post.collaborators.some((c) => c.user_id === user.id || c.user?.id === user.id);
+      setHasJoined(joined);
+    }
+  }, [post?.collaborators, user?.id]);
 
   useEffect(() => {
     const handleClickOutside = () => setShowMenu(false);
@@ -139,13 +161,40 @@ const PostCard = ({ post, onPostDeleted }) => {
     setShowMenu(false);
   };
 
-  const handleViewProject = () => {
+  const handleCardClick = () => {
     if (!actualPostId) return;
     navigate(`/project/${actualPostId}`);
   };
 
+  const handleLetsBuildConfirm = () => {
+    setShowLetsBuildConfirm(true);
+  };
+
+  const handleLetsBuild = async () => {
+    if (!actualPostId || collabLoading || isOwner) return;
+    setShowLetsBuildConfirm(false);
+    setCollabLoading(true);
+    try {
+      await joinFeedPost(actualPostId, {});
+      setHasJoined(true);
+      onPostCollaborated?.();
+      notify({ message: "You're in! The poster will see your request.", variant: 'success' });
+    } catch (e) {
+      notify({ message: e?.message || 'Could not join. You may have already joined.', variant: 'error' });
+    }
+    setCollabLoading(false);
+  };
+
+  const showLetsBuild = (postType === 'project' || postType === 'startup_idea') && !isOwner;
+
   return (
-    <article className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 hover:shadow-md transition-shadow">
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+      className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer active:bg-gray-50"
+    >
       {/* Header - Twitter style */}
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -179,8 +228,8 @@ const PostCard = ({ post, onPostDeleted }) => {
             </span>
           )}
           {isOwner && (
-            <div className="relative">
-              <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+            <div className="relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <MoreIcon className="w-4 h-4" />
               </button>
               {showMenu && (
@@ -225,7 +274,7 @@ const PostCard = ({ post, onPostDeleted }) => {
       )}
 
       {/* Actions - Twitter style */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={handleLike}
           disabled={likeLoading}
@@ -239,24 +288,33 @@ const PostCard = ({ post, onPostDeleted }) => {
         </button>
 
         <button
-          onClick={() => setShowComments(true)}
+          onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
         >
           <CommentIcon className="w-4 h-4" />
           <span>Comment</span>
         </button>
 
-        {postType === 'project' && (
+        {showLetsBuild && (
           <button
-            onClick={handleViewProject}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-indigo-500 hover:bg-indigo-50 transition"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isCollaborator) return;
+              handleLetsBuildConfirm();
+            }}
+            disabled={collabLoading}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isCollaborator
+              ? 'text-amber-600 bg-amber-50'
+              : 'text-gray-500 hover:text-amber-600 hover:bg-amber-50'
+              }`}
           >
-            <span>View</span>
+            <ThumbsUpIcon filled={isCollaborator} className="w-4 h-4" />
+            <span>Let&apos;s Build</span>
           </button>
         )}
 
         <button
-          onClick={handleShare}
+          onClick={(e) => { e.stopPropagation(); handleShare(); }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
         >
           <ShareIcon className="w-4 h-4" />
@@ -266,6 +324,41 @@ const PostCard = ({ post, onPostDeleted }) => {
 
       {/* Comments Modal */}
       <CommentSection postId={actualPostId} isOpen={showComments} onClose={() => setShowComments(false)} />
+
+      {/* Let's Build confirmation */}
+      {showLetsBuildConfirm && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-medium text-gray-900">Join this project?</p>
+            <p className="mt-1 text-xs text-gray-500">
+              The poster will get a notification and can see you want to build with them.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }}
+                className="flex-1 rounded-full border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleLetsBuild(); }}
+                disabled={collabLoading}
+                className="flex-1 rounded-full bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+              >
+                {collabLoading ? 'Joining...' : "Yes, I'm in"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 };
