@@ -1,8 +1,11 @@
 import clsx from 'clsx';
 
-const Card = ({ children, className = '', onClick, ...props }) => {
+import { forwardRef } from 'react';
+
+const Card = forwardRef(({ children, className = '', onClick, ...props }, ref) => {
   return (
     <div
+      ref={ref}
       onClick={onClick}
       className={clsx(
         'glass-card',
@@ -14,6 +17,8 @@ const Card = ({ children, className = '', onClick, ...props }) => {
       {children}
     </div>
   );
-};
+});
+
+Card.displayName = 'Card';
 
 export default Card;

@@ -282,3 +282,31 @@ From `backend/debug-output.txt`, the `applications` table columns include: `id`,
 
 ### Verification
 Restart the backend and call `GET /api/internships/my/applications` while authenticated. The endpoint should return applications ordered by `submitted_at` (newest first) without errors.
+
+## Feature & Layout Enhancements (Feb 8 2026)
+
+### Summary
+Implemented UI enhancements for the Hire tab, fixed a critical login redirect bug, and refactored the Student Profile for better desktop responsiveness.
+
+### Changes Made
+
+#### 1. Hire Tab: Collapsible Applicant Dropdown
+- **UI Refactoring**: Replaced the static, long list of applicants with a clean, collapsible dropdown system.
+- **Improved Hierarchy**: Added a "View Applicants" toggle button with a badge showing the applicant count.
+- **Information Density**: Restyled applicant items to show Name/Course/Year alongside the Resume Link in a more compact, side-by-side layout.
+- **Backend Safety**: Commented out the `resume_link` database persistence in `hiring.service.js` to allow testing of the new UI features without requiring immediate schema changes.
+
+#### 2. Student Profile: Desktop Layout Optimization
+- **Responsive Grid**: Implemented a 12-column grid layout for desktop views (`lg:grid-cols-12`).
+- **Sidebar Integration**: The Profile Sidebar (academic info, status, etc.) now spans 3 columns on desktop and remains `sticky` at the top while scrolling through the feed.
+- **Main Content Span**: The activity and post feed now spans 9 columns on desktop, providing much-needed breathing room and preventing elements from appearing "squished."
+- **Note**: Maintained "mobile-first" styling (large border-radii and generous spacing) while optimizing for wide-screen monitors.
+
+#### 3. Bug Fixes & Conflict Resolution
+- **Login Redirect**: Fixed a critical bug in `Login.jsx` where users were not redirected after successful authentication. Added a secure, hardcoded redirect to the home page (`/`).
+- **Notification Routing**: Resolved a merge conflict in the notification click handler. Notifications now navigate to the **Activity Section** (Posts tile) on the profile page and automatically scroll the user to that section, instead of navigating away.
+- **Git Merge**: Successfully merged the latest upstream changes from the main branch, integrating new Chat features and style updates while preserving local UI fixes.
+
+### Notes for Collaborators
+- **Database Task**: The `applications` table in Supabase still needs the `resume_link` (TEXT) column to be added for full functionality.
+- **CSS Hierarchy**: The Student Profile uses `lg:` breakpoints for the side-by-side layout. Keep utility classes in `StudentProfile.jsx` synced if modifying the sidebar.

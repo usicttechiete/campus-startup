@@ -188,9 +188,9 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
   const showLetsBuild = (postType === 'project' || postType === 'startup_idea') && !isOwner;
 
   const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' || e.key === ' ') { 
-      e.preventDefault(); 
-      handleCardClick(); 
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleCardClick();
     }
   }, [handleCardClick]);
 
@@ -265,9 +265,9 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
       {/* Content - Reddit style */}
       <div className="space-y-2">
-        <h3 className="font-semibold text-gray-900 text-[15px] leading-snug">{title}</h3>
+        <h3 className="font-semibold text-gray-900 text-[15px] leading-snug break-words">{title}</h3>
         {description && (
-          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">{description}</p>
+          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap break-words">{description}</p>
         )}
       </div>
 
@@ -297,43 +297,43 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
         <button
           onClick={handleLike}
           disabled={likeLoading}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isLiked
+          className={`flex items-center justify-center gap-1.5 h-10 px-3 rounded-full transition min-w-[2.5rem] ${isLiked
             ? 'text-red-500 bg-red-50 hover:bg-red-100'
             : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
             }`}
         >
-          <HeartIcon filled={isLiked} className="w-4 h-4" />
-          <span className="font-medium">{likeCount || ''}</span>
+          <HeartIcon filled={isLiked} className="w-5 h-5 flex-shrink-0" />
+          {likeCount > 0 && <span className="text-xs font-medium">{likeCount}</span>}
         </button>
 
         <button
           onClick={handleCommentClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
+          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
+          aria-label="Comment"
         >
-          <CommentIcon className="w-4 h-4" />
-          <span>Comment</span>
+          <CommentIcon className="w-5 h-5" />
         </button>
 
         {showLetsBuild && (
           <button
             onClick={handleLetsBuildClick}
             disabled={collabLoading}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isCollaborator
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition ${isCollaborator
               ? 'text-amber-600 bg-amber-50'
               : 'text-gray-500 hover:text-amber-600 hover:bg-amber-50'
               }`}
+            aria-label="Let's Build"
           >
-            <ThumbsUpIcon filled={isCollaborator} className="w-4 h-4" />
-            <span>Let&apos;s Build</span>
+            <ThumbsUpIcon filled={isCollaborator} className="w-5 h-5" />
           </button>
         )}
 
         <button
           onClick={handleShareClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
+          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
+          aria-label="Share"
         >
-          <ShareIcon className="w-4 h-4" />
-          <span>Share</span>
+          <ShareIcon className="w-5 h-5" />
         </button>
       </div>
 

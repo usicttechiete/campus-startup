@@ -16,6 +16,10 @@ const jobFormTemplate = {
   description: '',
   type: 'Internship',
   external_link: '',
+  location: '',
+  stipend: '',
+  duration: '',
+  application_deadline: '',
 };
 
 const statusOptions = ['Applied', 'Shortlisted', 'Rejected'];
@@ -193,6 +197,56 @@ const Hire = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
+                <label htmlFor="location" className="text-xs text-text-muted">Location</label>
+                <input
+                  id="location"
+                  name="location"
+                  value={jobForm.location}
+                  onChange={handleJobFormChange}
+                  placeholder="e.g. Remote"
+                  className="input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="duration" className="text-xs text-text-muted">Duration</label>
+                <input
+                  id="duration"
+                  name="duration"
+                  value={jobForm.duration}
+                  onChange={handleJobFormChange}
+                  placeholder="e.g. 3 Months"
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label htmlFor="stipend" className="text-xs text-text-muted">Stipend</label>
+                <input
+                  id="stipend"
+                  name="stipend"
+                  value={jobForm.stipend}
+                  onChange={handleJobFormChange}
+                  placeholder="e.g. ₹10k"
+                  className="input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label htmlFor="application_deadline" className="text-xs text-text-muted">Deadline</label>
+                <input
+                  id="application_deadline"
+                  name="application_deadline"
+                  type="date"
+                  value={jobForm.application_deadline}
+                  onChange={handleJobFormChange}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
                 <label htmlFor="type" className="text-xs text-text-muted">Type</label>
                 <select
                   id="type"
@@ -278,6 +332,29 @@ const Hire = () => {
                 {selectedJob.description && (
                   <p className="text-sm text-text-secondary">{selectedJob.description}</p>
                 )}
+
+                <div className="flex flex-wrap gap-3 text-xs text-text-muted">
+                  {selectedJob.location && (
+                    <div className="flex items-center gap-1">
+                      <span>📍</span> {selectedJob.location}
+                    </div>
+                  )}
+                  {selectedJob.duration && (
+                    <div className="flex items-center gap-1">
+                      <span>⏱️</span> {selectedJob.duration}
+                    </div>
+                  )}
+                  {selectedJob.stipend && (
+                    <div className="flex items-center gap-1">
+                      <span>💰</span> {selectedJob.stipend}
+                    </div>
+                  )}
+                  {selectedJob.application_deadline && (
+                    <div className="flex items-center gap-1">
+                      <span>📅</span> {new Date(selectedJob.application_deadline).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
 
                 <div className="border-t border-divider pt-4">
                   <button

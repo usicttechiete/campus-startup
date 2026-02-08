@@ -269,7 +269,7 @@ const Home = () => {
         <PullToRefresh onRefresh={handleRefresh} disabled={loading}>
           {posts.length > 0 ? (
             filteredPosts.length > 0 ? (
-              <div className="space-y-4">{renderFeed()}</div>
+              <div className="space-y-4">{renderFeed}</div>
             ) : (
               <div className="text-center py-12">
                 <div className="text-4xl mb-3">🔍</div>

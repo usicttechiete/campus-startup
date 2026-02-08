@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Button from '../Button/Button.jsx';
 import Loader from '../Loader/Loader.jsx';
 import Comment from '../Comment/Comment.jsx';
@@ -26,9 +27,15 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isOpen && postId) {
-      loadComments();
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      if (postId) loadComments();
+    } else {
+      document.body.style.overflow = '';
     }
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen, postId]);
 
   const loadComments = async () => {
@@ -69,8 +76,8 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="modal-backdrop z-[1000]" onClick={onClose}>
       <div
         className="modal-content animate-slide-up"
         onClick={(e) => e.stopPropagation()}
@@ -145,7 +152,8 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

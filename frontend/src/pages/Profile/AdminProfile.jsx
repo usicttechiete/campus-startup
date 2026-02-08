@@ -375,40 +375,103 @@ const AdminProfile = () => {
               postedInternships.map((internship) => (
                 <div
                   key={internship.id}
-                  className="rounded-2xl bg-card border border-border p-4 transition duration-200 hover:shadow-md hover:scale-[1.01]"
+                  className="group relative overflow-hidden rounded-2xl bg-card border border-border p-5 transition-all duration-300 hover:shadow-md hover:border-primary/30"
                 >
-                  <p className="text-body font-semibold mb-2">{internship.role_title}</p>
-                  <p className="text-xs text-muted mb-1 line-clamp-2">{internship.description}</p>
-                  <div className="flex gap-2 mt-2">
-                    <Badge variant="neutral" className="bg-surface/50 text-[10px]">
-                      {internship.type}
-                    </Badge>
-                    {/* Add more details if available, like applicants count */}
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <h4 className="text-base font-bold text-body group-hover:text-primary transition-colors">
+                        {internship.role_title}
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-muted">
+                        <Badge variant="neutral" className="bg-surface/80">
+                          {internship.type}
+                        </Badge>
+                        {internship.location && (
+                          <span className="flex items-center gap-1">
+                            📍 {internship.location}
+                          </span>
+                        )}
+                        {internship.stipend && (
+                          <span className="flex items-center gap-1">
+                            💰 {internship.stipend}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Placeholder for applicant count or action menu */}
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-body tabular-nums">
+                        {internship.applicant_count ?? 0}
+                      </span>
+                      <p className="text-[10px] uppercase text-muted font-bold tracking-wider">Applicants</p>
+                    </div>
+                  </div>
+
+                  {internship.description && (
+                    <p className="mt-3 text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                      {internship.description}
+                    </p>
+                  )}
+
+                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-muted uppercase tracking-wider">
+                      {internship.duration || 'Duration N/A'}
+                    </span>
+                    <Button size="xs" variant="ghost" className="text-primary h-auto py-1 px-2 hover:bg-primary/5">
+                      View Details →
+                    </Button>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted">No internships posted yet. Start creating opportunities for students.</p>
+              <div className="text-center py-10 rounded-3xl border border-dashed border-border/60 bg-surface/30">
+                <p className="text-sm font-medium text-muted">No internships posted yet.</p>
+                <Button variant="subtle" size="sm" className="mt-2 text-primary" onClick={() => navigate('/hire')}>
+                  Post functionality is in Hire tab
+                </Button>
+              </div>
             )}
           </div>
         );
       case 'events':
         return (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {eventsParticipated.length ? (
               eventsParticipated.map((event) => (
                 <div
                   key={event.id || event.event_id || event.title}
-                  className="rounded-2xl bg-card border border-border p-4 transition duration-200 hover:shadow-md hover:scale-[1.01]"
+                  className="group rounded-2xl bg-card border border-border p-5 transition-all duration-300 hover:shadow-md hover:border-accent/30"
                 >
-                  <p className="text-body font-semibold mb-2">{event.title || event.name}</p>
-                  {event.role && <p className="text-xs text-muted mb-1">Role: {event.role}</p>}
-                  {event.stage && <p className="text-xs text-muted mb-1">Stage: {event.stage}</p>}
-                  {event.result && <p className="text-xs text-success">Outcome: {event.result}</p>}
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="space-y-1">
+                      <h4 className="text-base font-bold text-body group-hover:text-accent transition-colors">
+                        {event.title || event.name}
+                      </h4>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {event.role && (
+                          <Badge variant="neutral" className="bg-surface">
+                            {event.role}
+                          </Badge>
+                        )}
+                        {event.stage && (
+                          <span className="flex items-center gap-1 text-muted font-medium px-1.5 py-0.5 rounded-md bg-surface/50">
+                            🚀 {event.stage}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {event.result && (
+                      <Badge variant="success" className="uppercase tracking-wider font-bold text-[10px] px-2 py-1">
+                        {event.result}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted">No events hosted yet. Start organizing events to engage the community.</p>
+              <div className="text-center py-10 rounded-3xl border border-dashed border-border/60 bg-surface/30">
+                <p className="text-sm font-medium text-muted">No events hosted yet.</p>
+              </div>
             )}
           </div>
         );

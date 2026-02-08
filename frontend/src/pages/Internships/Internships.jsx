@@ -198,7 +198,7 @@ const Internships = () => {
           value={filters.search}
           onChange={handleFilterChange('search')}
           placeholder="Search internships..."
-          className="input pl-12"
+          className="input pl-14"
         />
       </div>
 
