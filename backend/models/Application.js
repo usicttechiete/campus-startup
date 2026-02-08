@@ -37,6 +37,20 @@ const Application = {
     return data;
   },
 
+  async findExisting(jobId, applicantId) {
+    const { data, error } = await supabase
+      .from('applications')
+      .select('id')
+      .eq('job_id', jobId)
+      .eq('applicant_id', applicantId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      throw new Error(error.message);
+    }
+    return data;
+  },
+
   async create(applicationData) {
     const { data, error } = await supabase.from('applications').insert(applicationData).select().single();
     if (error) {

@@ -66,7 +66,7 @@ const iconMap = {
   graduation: GraduationIcon,
 };
 
-// Navigation items - Students see Jobs, Admins see Hire
+// Navigation items - Admins have Hire tab to view all jobs, students post from startup pages
 const navItems = [
   { to: '/', label: 'Home', icon: 'home', roles: ['student', 'admin'] },
   { to: '/internships', label: 'Jobs', icon: 'graduation', roles: ['student'] },

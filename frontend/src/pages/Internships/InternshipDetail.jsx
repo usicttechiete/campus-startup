@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../../components/Card/Card.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import Button from '../../components/Button/Button.jsx';
-import { fetchInternshipById, applyToInternship } from '../../services/internship.api.js';
+import Badge from '../../components/Badge/Badge.jsx';
+import { fetchInternshipById, applyToInternship, checkApplicationStatus } from '../../services/internship.api.js';
 import { useNotification } from '../../context/NotificationContext.jsx';
 
 const InternshipDetail = () => {
@@ -15,6 +16,8 @@ const InternshipDetail = () => {
   const [error, setError] = useState('');
   const [resumeLink, setResumeLink] = useState('');
   const [applyLoading, setApplyLoading] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   useEffect(() => {
     if (!internshipId) return;
@@ -39,7 +42,25 @@ const InternshipDetail = () => {
       }
     };
 
+    const checkStatus = async () => {
+      setCheckingStatus(true);
+      try {
+        const result = await checkApplicationStatus(internshipId);
+        if (mounted && result.hasApplied) {
+          setHasApplied(true);
+        }
+      } catch (err) {
+        console.error('Failed to check application status:', err);
+      } finally {
+        if (mounted) {
+          setCheckingStatus(false);
+        }
+      }
+    };
+
     loadInternship();
+    checkStatus();
+
     return () => {
       mounted = false;
     };
@@ -55,10 +76,18 @@ const InternshipDetail = () => {
     setError('');
     try {
       await applyToInternship(internshipId, { resumeLink });
-      notify({ message: 'Application submitted!', variant: 'success' });
+      notify({ message: 'Application submitted successfully!', variant: 'success' });
       setResumeLink('');
+      setHasApplied(true);
     } catch (err) {
-      setError(err.message || 'Failed to submit application');
+      const errorMessage = err.message || 'Failed to submit application';
+      setError(errorMessage);
+      notify({ message: errorMessage, variant: 'error' });
+
+      // Check if error is about duplicate application
+      if (errorMessage.includes('already applied')) {
+        setHasApplied(true);
+      }
     } finally {
       setApplyLoading(false);
     }
@@ -81,59 +110,96 @@ const InternshipDetail = () => {
         </div>
       )}
 
-      {error && !loading && (
-        <Card className="border border-danger/20 bg-danger/5 text-danger">
+      {error && !loading && !hasApplied && (
+        <Card className="border border-danger/20 bg-danger/5 text-danger p-4">
           {error}
         </Card>
       )}
 
-      {!loading && !error && internship && (
+      {!loading && internship && (
         <div className="space-y-5">
-          <section className="rounded-3xl bg-gradient-to-br from-[#1F2937] via-[#111827] to-[#0F172A] p-6 text-white shadow-lg">
-            <p className="text-xs uppercase tracking-wide text-white/70">Internship</p>
-            <h1 className="mt-2 text-2xl font-semibold">{internship.role_title}</h1>
-            <p className="mt-2 text-sm text-white/80">{internship.company_name || 'Company'}</p>
+          {/* Header Card */}
+          <Card className="p-5 bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-text-primary">{internship.company_name || 'Company'}</h1>
+                <p className="text-base text-text-secondary mt-1">Role: {internship.role_title}</p>
+              </div>
+              {internship.type && (
+                <Badge variant="primary">{internship.type}</Badge>
+              )}
+            </div>
             {internship.description && (
-              <p className="mt-3 text-sm leading-relaxed text-white/80">{internship.description}</p>
+              <p className="text-sm text-text-secondary leading-relaxed">{internship.description}</p>
             )}
-          </section>
+          </Card>
 
-          <section className="grid gap-4 sm:grid-cols-2">
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Location</h3>
-              <p className="text-sm text-muted">{internship.location || internship.mode || '—'}</p>
+          {/* Details Grid */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Card className="p-4 space-y-1">
+              <h3 className="text-xs font-semibold text-text-muted uppercase">Location</h3>
+              <p className="text-sm text-text-primary">{internship.location || internship.mode || '—'}</p>
             </Card>
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Type</h3>
-              <p className="text-sm text-muted">{internship.type || 'Internship'}</p>
-            </Card>
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Stipend</h3>
-              <p className="text-sm text-muted">{internship.stipend || internship.salary_range || internship.compensation || '—'}</p>
-            </Card>
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Duration</h3>
-              <p className="text-sm text-muted">
+            <Card className="p-4 space-y-1">
+              <h3 className="text-xs font-semibold text-text-muted uppercase">Duration</h3>
+              <p className="text-sm text-text-primary">
                 {internship.duration || internship.duration_text || internship.duration_label || internship.duration_months || '—'}
               </p>
             </Card>
-          </section>
+            <Card className="p-4 space-y-1">
+              <h3 className="text-xs font-semibold text-text-muted uppercase">Stipend</h3>
+              <p className="text-sm text-text-primary">{internship.stipend || internship.salary_range || internship.compensation || '—'}</p>
+            </Card>
+            <Card className="p-4 space-y-1">
+              <h3 className="text-xs font-semibold text-text-muted uppercase">Deadline</h3>
+              <p className="text-sm text-text-primary">
+                {internship.application_deadline
+                  ? new Date(internship.application_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : '—'}
+              </p>
+            </Card>
+          </div>
 
-          <Card className="space-y-3 border border-border bg-card p-4">
-            <h3 className="text-sm font-semibold text-body">Apply now</h3>
-            <form onSubmit={handleApply} className="flex flex-col gap-3 sm:flex-row">
-              <input
-                type="url"
-                value={resumeLink}
-                onChange={(event) => setResumeLink(event.target.value)}
-                placeholder="Paste resume link"
-                className="input flex-1 text-sm"
-                required
-              />
-              <Button type="submit" variant="primary" size="sm" disabled={applyLoading}>
-                {applyLoading ? <Loader size="sm" inline /> : 'Apply'}
-              </Button>
-            </form>
+          {/* Apply Section */}
+          <Card className="p-5 border-2 border-primary/20">
+            <h3 className="text-base font-bold text-text-primary mb-3">Apply for this position</h3>
+
+            {checkingStatus ? (
+              <div className="flex justify-center py-4">
+                <Loader size="sm" label="Checking status" />
+              </div>
+            ) : hasApplied ? (
+              <div className="flex items-center gap-2 p-4 rounded-lg bg-success-soft text-success">
+                <span className="text-lg">✓</span>
+                <div>
+                  <p className="font-medium">Application Submitted!</p>
+                  <p className="text-sm opacity-80">You have already applied to this position.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleApply} className="space-y-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="resume" className="text-xs font-medium text-text-muted">
+                    Resume Link *
+                  </label>
+                  <input
+                    id="resume"
+                    type="url"
+                    value={resumeLink}
+                    onChange={(event) => setResumeLink(event.target.value)}
+                    placeholder="https://drive.google.com/your-resume"
+                    className="input"
+                    required
+                  />
+                  <p className="text-xs text-text-muted">
+                    Paste a link to your resume (Google Drive, Dropbox, etc.)
+                  </p>
+                </div>
+                <Button type="submit" variant="primary" size="md" disabled={applyLoading} className="w-full">
+                  {applyLoading ? <Loader size="sm" inline label="Submitting" /> : 'Submit Application'}
+                </Button>
+              </form>
+            )}
           </Card>
         </div>
       )}

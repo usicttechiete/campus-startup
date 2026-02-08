@@ -21,3 +21,10 @@ export const updateJob = (jobId, payload) =>
     method: 'PATCH',
     data: payload,
   });
+
+export const deleteJob = (jobId) =>
+  apiFetch(`/api/hire/jobs/${jobId}`, {
+    method: 'DELETE',
+  });
+
+export const fetchMyApprovedStartup = () => apiFetch('/api/startups/me');

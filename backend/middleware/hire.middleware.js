@@ -15,7 +15,9 @@ const hireMiddleware = async (req, res, next) => {
       throw new Error('Failed to fetch user role');
     }
 
+    // Allow admins to view jobs only (posting will be restricted in controller)
     if (data?.role === 'admin') {
+      req.isAdmin = true;
       return next();
     }
 
@@ -26,6 +28,7 @@ const hireMiddleware = async (req, res, next) => {
     const startup = await Startup.findLatestByUserId(user.id);
 
     if (startup?.status === 'APPROVED') {
+      req.approvedStartup = startup;
       return next();
     }
 

@@ -56,6 +56,17 @@ const Job = {
     }
     return data;
   },
+
+  async delete(id) {
+    const { error } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', id);
+    if (error) {
+      throw new Error(error.message);
+    }
+    return { success: true };
+  },
 };
 
 export default Job;

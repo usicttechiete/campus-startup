@@ -3,6 +3,7 @@ const router = express.Router();
 import {
   postJobController,
   updateJobController,
+  deleteJobController,
   getJobsController,
   getApplicantsController,
   updateApplicationStatusController,
@@ -16,6 +17,7 @@ router.use(authMiddleware, hireMiddleware);
 router.get('/jobs', getJobsController);
 router.post('/jobs', postJobController);
 router.patch('/jobs/:id', updateJobController);
+router.delete('/jobs/:id', deleteJobController);
 router.get('/jobs/:id/apps', getApplicantsController);
 router.patch('/apps/:id', updateApplicationStatusController);
 

@@ -4,6 +4,23 @@ export const fetchEvents = (params) => apiFetch('/api/events', { params });
 
 export const fetchEventDetail = (eventId) => apiFetch(`/api/events/${eventId}`);
 
+export const createEvent = (payload) =>
+  apiFetch('/api/events', {
+    method: 'POST',
+    data: payload,
+  });
+
+export const updateEvent = (eventId, payload) =>
+  apiFetch(`/api/events/${eventId}`, {
+    method: 'PATCH',
+    data: payload,
+  });
+
+export const deleteEvent = (eventId) =>
+  apiFetch(`/api/events/${eventId}`, {
+    method: 'DELETE',
+  });
+
 export const fetchEventTimeline = (eventId) => apiFetch(`/api/events/${eventId}/timeline`);
 
 export const fetchEventTeams = (eventId, params) => apiFetch(`/api/events/${eventId}/teams`, { params });

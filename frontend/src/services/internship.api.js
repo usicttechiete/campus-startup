@@ -11,3 +11,7 @@ export const applyToInternship = (internshipId, payload) =>
   });
 
 export const fetchMyApplications = () => apiFetch('/api/internships/my/applications');
+
+export const fetchJobsByStartup = (startupId) => apiFetch(`/api/internships/startup/${startupId}`);
+
+export const checkApplicationStatus = (internshipId) => apiFetch(`/api/internships/${internshipId}/status`);

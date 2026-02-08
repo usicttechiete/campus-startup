@@ -1,10 +1,12 @@
 import {
   getJobs,
   getJobById,
+  getJobsByCompanyId,
   createJob,
   applyForJob,
   getApplicantsForJob,
   getUserApplications,
+  checkHasApplied,
   updateApplication,
 } from '../services/hiring.service.js';
 
@@ -53,9 +55,31 @@ const getMyApplicationsController = async (req, res) => {
   }
 };
 
+const getJobsByStartupController = async (req, res) => {
+  try {
+    const { startupId } = req.params;
+    const jobs = await getJobsByCompanyId(startupId);
+    res.status(200).json({ results: jobs });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const checkApplicationStatusController = async (req, res) => {
+  try {
+    const { id: internshipId } = req.params;
+    const result = await checkHasApplied(internshipId, req.user.id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getInternshipsController,
   getInternshipByIdController,
   applyToInternshipController,
   getMyApplicationsController,
+  getJobsByStartupController,
+  checkApplicationStatusController,
 };
