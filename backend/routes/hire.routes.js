@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import {
   postJobController,
+  updateJobController,
   getJobsController,
   getApplicantsController,
   updateApplicationStatusController,
@@ -14,6 +15,7 @@ router.use(authMiddleware, hireMiddleware);
 
 router.get('/jobs', getJobsController);
 router.post('/jobs', postJobController);
+router.patch('/jobs/:id', updateJobController);
 router.get('/jobs/:id/apps', getApplicantsController);
 router.patch('/apps/:id', updateApplicationStatusController);
 

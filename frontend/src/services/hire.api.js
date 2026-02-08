@@ -15,3 +15,9 @@ export const updateApplicationStatus = (applicationId, payload) =>
     method: 'PATCH',
     data: payload,
   });
+
+export const updateJob = (jobId, payload) =>
+  apiFetch(`/api/hire/jobs/${jobId}`, {
+    method: 'PATCH',
+    data: payload,
+  });

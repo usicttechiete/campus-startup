@@ -3,6 +3,7 @@ import {
   getJobsByCompanyId,
   getJobById,
   createJob,
+  updateJob,
   applyForJob,
   getApplicantsForJob,
   getUserApplications,
@@ -14,6 +15,16 @@ const postJobController = async (req, res) => {
     // Assuming company_id is the user's id if they are an admin
     const newJob = await createJob(req.user.id, req.body);
     res.status(201).json(newJob);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const updateJobController = async (req, res) => {
+  try {
+    const { id: jobId } = req.params;
+    const updatedJob = await updateJob(jobId, req.body);
+    res.status(200).json(updatedJob);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -52,6 +63,7 @@ const updateApplicationStatusController = async (req, res) => {
 
 export {
   postJobController,
+  updateJobController,
   getJobsController,
   getApplicantsController,
   updateApplicationStatusController,

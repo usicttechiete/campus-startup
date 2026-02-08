@@ -29,7 +29,7 @@ const getJobById = async (jobId) => {
 };
 
 const createJob = async (companyId, jobDetails) => {
-  const { role_title, description, type, external_link } = jobDetails;
+  const { role_title, description, type, external_link, location, stipend, duration, application_deadline } = jobDetails;
 
   if (!role_title || !description || !type) {
     throw new Error('Role title, description, and type are required');
@@ -42,10 +42,34 @@ const createJob = async (companyId, jobDetails) => {
       description,
       type,
       external_link,
+      location,
+      stipend,
+      duration,
+      application_deadline: application_deadline || null,
     });
     return newJob;
   } catch (error) {
     throw new Error(`Error creating job: ${error.message}`);
+  }
+};
+
+const updateJob = async (jobId, jobDetails) => {
+  const { role_title, description, type, external_link, location, stipend, duration, application_deadline } = jobDetails;
+
+  try {
+    const updatedJob = await Job.update(jobId, {
+      role_title,
+      description,
+      type,
+      external_link,
+      location,
+      stipend,
+      duration,
+      application_deadline: application_deadline || null,
+    });
+    return updatedJob;
+  } catch (error) {
+    throw new Error(`Error updating job: ${error.message}`);
   }
 };
 
@@ -59,7 +83,7 @@ const applyForJob = async (jobId, applicantId, applicationDetails) => {
     const newApplication = await Application.create({
       job_id: jobId,
       applicant_id: applicantId,
-      // resume_link: resumeLink, // Uncomment when column is added to DB
+      resume_link: resumeLink,
       status: 'Applied',
     });
     return newApplication;
@@ -108,6 +132,7 @@ export {
   getJobsByCompanyId,
   getJobById,
   createJob,
+  updateJob,
   applyForJob,
   getApplicantsForJob,
   getUserApplications,

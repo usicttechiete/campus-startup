@@ -43,6 +43,19 @@ const Job = {
     }
     return data;
   },
+
+  async update(id, jobData) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .update(jobData)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data;
+  },
 };
 
 export default Job;

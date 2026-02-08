@@ -7,6 +7,7 @@ import {
   fetchHireJobs,
   fetchJobApplicants,
   postJob,
+  updateJob,
   updateApplicationStatus,
 } from '../../services/hire.api.js';
 import { formatLevel, formatTrustScore } from '../../utils/formatters.js';
@@ -61,6 +62,7 @@ const Hire = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [statusLoadingId, setStatusLoadingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingJobId, setEditingJobId] = useState(null);
 
   const loadJobs = async () => {
     setLoadingJobs(true);
@@ -119,15 +121,47 @@ const Hire = () => {
     setSuccessMessage(null);
     setJobError(null);
     try {
-      await postJob(jobForm);
-      setSuccessMessage('Role posted successfully!');
+      if (editingJobId) {
+        await updateJob(editingJobId, jobForm);
+        setSuccessMessage('Role updated successfully!');
+      } else {
+        await postJob(jobForm);
+        setSuccessMessage('Role posted successfully!');
+      }
       setJobForm(jobFormTemplate);
       setShowForm(false);
+      setEditingJobId(null);
       await loadJobs();
     } catch (err) {
-      setJobError(err.message || 'Failed to post job');
+      setJobError(err.message || 'Failed to submit job');
     } finally {
       setJobSubmitting(false);
+    }
+  };
+
+  const handleEditJob = (job) => {
+    setJobForm({
+      role_title: job.role_title || '',
+      description: job.description || '',
+      type: job.type || 'Internship',
+      external_link: job.external_link || '',
+      location: job.location || '',
+      stipend: job.stipend || '',
+      duration: job.duration || '',
+      application_deadline: job.application_deadline ? job.application_deadline.split('T')[0] : '',
+    });
+    setEditingJobId(job.id);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const toggleForm = () => {
+    if (showForm) {
+      setShowForm(false);
+      setEditingJobId(null);
+      setJobForm(jobFormTemplate);
+    } else {
+      setShowForm(true);
     }
   };
 
@@ -152,8 +186,8 @@ const Hire = () => {
           <h1 className="text-xl font-bold text-text-primary">Hire</h1>
           <p className="text-xs text-text-muted">Post roles and review applicants</p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ Post Role'}
+        <Button variant="primary" size="sm" onClick={toggleForm}>
+          {showForm ? 'Cancel' : (editingJobId ? 'Edit Role' : '+ Post Role')}
         </Button>
       </header>
 
@@ -277,7 +311,11 @@ const Hire = () => {
             {jobError && <p className="text-xs text-danger">{jobError}</p>}
 
             <Button type="submit" variant="primary" disabled={jobSubmitting} className="w-full">
-              {jobSubmitting ? <Loader size="sm" inline label="Posting" /> : 'Post Role'}
+              {jobSubmitting ? (
+                <Loader size="sm" inline label={editingJobId ? 'Updating' : 'Posting'} />
+              ) : (
+                editingJobId ? 'Update Role' : 'Post Role'
+              )}
             </Button>
           </form>
         </Card>
@@ -326,7 +364,15 @@ const Hire = () => {
                     <h3 className="text-base font-semibold text-text-primary">{selectedJob.role_title}</h3>
                     <p className="text-xs text-text-muted">{selectedJob.company_name || 'Your company'}</p>
                   </div>
-                  <Badge variant="primary">{selectedJob.type}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="primary">{selectedJob.type}</Badge>
+                    <button
+                      onClick={() => handleEditJob(selectedJob)}
+                      className="text-[10px] font-medium text-primary hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </div>
 
                 {selectedJob.description && (
