@@ -10,6 +10,15 @@ const getJobs = async (filters) => {
   }
 };
 
+const getJobsByCompanyId = async (companyId) => {
+  try {
+    const jobs = await Job.findByCompanyId(companyId);
+    return jobs;
+  } catch (error) {
+    throw new Error(`Error fetching jobs by company: ${error.message}`);
+  }
+};
+
 const getJobById = async (jobId) => {
   try {
     const job = await Job.findById(jobId);
@@ -50,8 +59,7 @@ const applyForJob = async (jobId, applicantId, applicationDetails) => {
     const newApplication = await Application.create({
       job_id: jobId,
       applicant_id: applicantId,
-      // In a real app, you would store the resume link or file path
-      // For now, we'll just mark the status as Applied.
+      // resume_link: resumeLink, // Uncomment when column is added to DB
       status: 'Applied',
     });
     return newApplication;
@@ -97,6 +105,7 @@ const updateApplication = async (applicationId, status) => {
 
 module.exports = {
   getJobs,
+  getJobsByCompanyId,
   getJobById,
   createJob,
   applyForJob,

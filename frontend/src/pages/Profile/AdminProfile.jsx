@@ -196,7 +196,6 @@ const AdminProfile = () => {
 
   useEffect(() => {
     loadProfile();
-    loadProfile();
   }, []);
 
   useEffect(() => {

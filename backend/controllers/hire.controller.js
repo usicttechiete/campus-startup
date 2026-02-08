@@ -10,6 +10,16 @@ const postJobController = async (req, res) => {
   }
 };
 
+const getJobsController = async (req, res) => {
+  try {
+    // Fetch jobs created by the current admin/company user
+    const jobs = await hiringService.getJobsByCompanyId(req.user.id);
+    res.status(200).json({ results: jobs });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getApplicantsController = async (req, res) => {
   try {
     const { id: jobId } = req.params;
@@ -33,6 +43,7 @@ const updateApplicationStatusController = async (req, res) => {
 
 module.exports = {
   postJobController,
+  getJobsController,
   getApplicantsController,
   updateApplicationStatusController,
 };

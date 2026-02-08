@@ -6,7 +6,7 @@ const Application = {
       .from('applications')
       .select(`
         *,
-        applicant:users(id, name, email, academic_year, batch, level, trust_score)
+        applicant:users(id, name, email, college, course, branch, year, trust_score)
       `)
       .eq('job_id', jobId);
 
