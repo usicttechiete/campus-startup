@@ -1,5 +1,5 @@
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 
 const app = express();
 
@@ -14,17 +14,19 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-const authRoutes = require('./routes/auth.routes.js');
-const feedRoutes = require('./routes/feed.routes.js');
-const internshipRoutes = require('./routes/internship.routes.js');
-const hireRoutes = require('./routes/hire.routes.js');
-const eventRoutes = require('./routes/event.routes.js');
-const userRoutes = require('./routes/user.routes.js');
-const trustRoutes = require('./routes/trust.routes.js');
-const commentRoutes = require('./routes/comment.routes.js');
-const likeRoutes = require('./routes/like.routes.js');
-const adminStartupRoutes = require('./routes/admin.startup.routes.js');
-const notificationRoutes = require('./routes/notification.routes.js');
+import authRoutes from './routes/auth.routes.js';
+import feedRoutes from './routes/feed.routes.js';
+import internshipRoutes from './routes/internship.routes.js';
+import hireRoutes from './routes/hire.routes.js';
+import eventRoutes from './routes/event.routes.js';
+import userRoutes from './routes/user.routes.js';
+import trustRoutes from './routes/trust.routes.js';
+import commentRoutes from './routes/comment.routes.js';
+import likeRoutes from './routes/like.routes.js';
+import adminStartupRoutes from './routes/admin.startup.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import startupRoutes from './routes/startup.routes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/feed', feedRoutes);
@@ -35,10 +37,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/trust', trustRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', likeRoutes);
-app.use('/api/users', require('./routes/user.routes'));
-app.use('/api/startups', require('./routes/startup.routes'));
+app.use('/api/startups', startupRoutes);
 app.use('/api/admin', adminStartupRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/chat', chatRoutes);
 
-module.exports = app;
+export default app;

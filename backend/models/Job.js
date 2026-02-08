@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Job = {
   async findAll(filters = {}) {
@@ -33,4 +33,4 @@ const Job = {
   },
 };
 
-module.exports = Job;
+export default Job;

@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 // Auth routes are handled by Supabase on the frontend.
@@ -9,4 +9,4 @@ router.get('/session', (req, res) => {
   res.status(200).json({ message: 'Backend does not manage sessions. Verify JWTs directly.' });
 });
 
-module.exports = router;
+export default router;

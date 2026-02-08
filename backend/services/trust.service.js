@@ -1,5 +1,5 @@
-const Endorsement = require('../models/Endorsement');
-const User = require('../models/User');
+import Endorsement from '../models/Endorsement.js';
+import User from '../models/User.js';
 
 // This is a simplified trust score calculation for demonstration.
 // A real implementation would be more complex and likely run as a background job.
@@ -65,7 +65,7 @@ const createEndorsement = async (fromUserId, toUserId, rating) => {
   }
 };
 
-module.exports = {
+export {
   createEndorsement,
   calculateTrustScore, // Exporting for potential manual recalculation
 };

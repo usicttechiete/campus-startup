@@ -63,18 +63,18 @@ const Home = () => {
     loadPosts({ stage: 'all', post_type: 'project' });
   }, []);
 
-  const handleFilterChange = (stageValue) => {
+  const handleFilterChange = useCallback((stageValue) => {
     loadPosts({ stage: stageValue });
-  };
+  }, [loadPosts]);
 
   const handleRefresh = useCallback(() => loadPosts(), [loadPosts]);
 
-  const handleFormChange = (e) => {
+  const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
-  const handleCreatePost = async (e) => {
+  const handleCreatePost = useCallback(async (e) => {
     e.preventDefault();
     setFormLoading(true);
     setFormError(null);
@@ -96,12 +96,25 @@ const Home = () => {
       setFormError(err.message || 'Failed to create post');
     }
     setFormLoading(false);
-  };
+  }, [form, loadPosts]);
 
-  const getFormTitle = () => {
-    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
-    return types[form.post_type] || 'Create Post';
-  };
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  const handleShowForm = useCallback(() => setShowForm(true), []);
+  const handleCloseForm = useCallback(() => setShowForm(false), []);
+
+  const handlePostTypeChange = useCallback((typeValue) => {
+    loadPosts({ post_type: typeValue, stage: typeValue === 'work_update' ? 'all' : filters?.stage });
+  }, [loadPosts, filters?.stage]);
+
+  const handleFormTypeChange = useCallback((typeValue) => {
+    setForm((prev) => ({ ...prev, post_type: typeValue }));
+  }, []);
+
+  const handleModalClick = useCallback((e) => e.stopPropagation(), []);
+  const handleModalFormClick = useCallback((e) => e.stopPropagation(), []);
 
   // Client-side search filter: match title and description (case-insensitive)
   const filteredPosts = useMemo(() => {
@@ -117,8 +130,13 @@ const Home = () => {
   // Fixed positions: Jobs after 2nd post, Startups after 5th (predictable UX)
   const suggestionPositions = { jobs: 2, startups: 5 };
 
+  const getFormTitle = useCallback(() => {
+    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
+    return types[form.post_type] || 'Create Post';
+  }, [form.post_type]);
+
   // Render feed with suggestion sections inserted at fixed positions
-  const renderFeed = () => {
+  const renderFeed = useMemo(() => {
     const elements = [];
     let jobsInserted = false;
     let startupsInserted = false;
@@ -171,7 +189,7 @@ const Home = () => {
     }
 
     return elements;
-  };
+  }, [filteredPosts, loadPosts]);
 
   return (
     <div className="space-y-4">
@@ -180,7 +198,7 @@ const Home = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900">Feed</h1>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={handleShowForm}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-full hover:bg-blue-700 transition active:scale-95"
           >
             <PlusIcon className="w-4 h-4" />
@@ -194,7 +212,7 @@ const Home = () => {
             type="text"
             placeholder="Search ideas, projects..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             className="w-full bg-gray-100 border-0 rounded-full py-2.5 px-10 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
           />
           <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -205,7 +223,7 @@ const Home = () => {
           {postTypes.map((type) => (
             <button
               key={type.value}
-              onClick={() => loadPosts({ post_type: type.value, stage: type.value === 'work_update' ? 'all' : filters?.stage })}
+              onClick={() => handlePostTypeChange(type.value)}
               className={`flex-1 py-3 text-sm font-semibold transition relative ${filters?.post_type === type.value
                 ? 'text-blue-600'
                 : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
@@ -264,7 +282,7 @@ const Home = () => {
               <div className="text-4xl mb-3">🌟</div>
               <p className="text-gray-600 text-sm mb-2">No posts yet. Be the first!</p>
               <p className="text-gray-500 text-xs mb-4">Share a project idea or post an update to get started.</p>
-              <Button onClick={() => setShowForm(true)}>Create Post</Button>
+              <Button onClick={handleShowForm}>Create Post</Button>
             </div>
           )}
         </PullToRefresh>
@@ -272,12 +290,12 @@ const Home = () => {
 
       {/* Create Post Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowForm(false)}>
-          <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50" onClick={handleCloseForm}>
+          <div className="w-full max-w-[480px] bg-white rounded-t-3xl animate-slide-up" onClick={handleModalFormClick}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">{getFormTitle()}</h2>
-              <button onClick={() => setShowForm(false)} className="p-2 rounded-full hover:bg-gray-100">
+              <button onClick={handleCloseForm} className="p-2 rounded-full hover:bg-gray-100">
                 <CloseIcon className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -290,7 +308,7 @@ const Home = () => {
                   <button
                     key={type.value}
                     type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, post_type: type.value }))}
+                    onClick={handleFormTypeChange}
                     className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${form.post_type === type.value
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-600'

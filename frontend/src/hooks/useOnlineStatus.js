@@ -8,7 +8,6 @@ export const useOnlineStatus = (userId) => {
   // Set user as online
   const setOnlineStatus = useCallback(async (online) => {
     if (!userId) {
-      console.log('useOnlineStatus: No userId provided');
       return;
     }
 
@@ -18,8 +17,6 @@ export const useOnlineStatus = (userId) => {
         last_seen: new Date().toISOString(),
       };
 
-      console.log('useOnlineStatus: Updating status', { userId, online });
-
       const { error } = await supabase
         .from('users')
         .update(updateData)
@@ -28,7 +25,6 @@ export const useOnlineStatus = (userId) => {
       if (error) {
         console.error('Error updating online status:', error);
       } else {
-        console.log('useOnlineStatus: Status updated successfully', { online });
         setIsOnline(online);
         setLastSeen(updateData.last_seen);
       }
@@ -40,11 +36,8 @@ export const useOnlineStatus = (userId) => {
 
   useEffect(() => {
     if (!userId) {
-      console.log('useOnlineStatus: No userId, skipping initialization');
       return;
     }
-
-    console.log('useOnlineStatus: Initializing for userId:', userId);
 
     // Set as online immediately
     setOnlineStatus(true);

@@ -1,4 +1,4 @@
-const Like = require('../models/Like');
+import Like from '../models/Like.js';
 
 const getLikes = async (req, res) => {
   try {
@@ -62,7 +62,7 @@ const getLikeInfo = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getLikes,
   toggleLike,
   getLikeInfo,

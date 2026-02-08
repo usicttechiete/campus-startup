@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Event = {
   async findAll() {
@@ -10,4 +10,4 @@ const Event = {
   },
 };
 
-module.exports = Event;
+export default Event;

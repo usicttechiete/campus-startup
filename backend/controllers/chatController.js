@@ -1,6 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-exports.sendMessage = async (req, res) => {
+export const sendMessage = async (req, res) => {
     try {
         console.log('--- Chat Request Received ---');
         console.log('API Key configured:', !!process.env.GEMINI_API_KEY);

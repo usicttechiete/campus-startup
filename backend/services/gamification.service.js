@@ -13,7 +13,7 @@ const updateUserLevel = (userId) => {
   console.log(`Checking and updating level for user ${userId}`);
 };
 
-module.exports = {
+export {
   awardBadge,
   updateUserLevel,
 };

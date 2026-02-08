@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Endorsement = {
   async create(endorsementData) {
@@ -22,4 +22,4 @@ const Endorsement = {
   },
 };
 
-module.exports = Endorsement;
+export default Endorsement;

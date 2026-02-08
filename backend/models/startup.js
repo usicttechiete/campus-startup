@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Startup = {
   async create(startupData) {
@@ -101,4 +101,4 @@ const Startup = {
   }
 };
 
-module.exports = Startup;
+export default Startup;

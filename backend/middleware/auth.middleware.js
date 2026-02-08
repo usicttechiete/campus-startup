@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const supabase = require('../config/db');
+import jwt from 'jsonwebtoken';
+import supabase from '../config/db.js';
 
 const { SUPABASE_JWT_SECRET } = process.env;
 
@@ -41,4 +41,4 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

@@ -1,5 +1,5 @@
-const Notification = require('../models/Notification');
-const User = require('../models/User');
+import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 
 const createLetsBuildNotification = async (recipientId, actorId, postId, postTitle) => {
   let actorName = 'Someone';
@@ -25,7 +25,7 @@ const markAsRead = async (notificationId, userId) => {
   return Notification.markAsRead(notificationId, userId);
 };
 
-module.exports = {
+export {
   createLetsBuildNotification,
   getMyNotifications,
   markAsRead,

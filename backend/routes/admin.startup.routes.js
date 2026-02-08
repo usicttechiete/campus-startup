@@ -1,16 +1,15 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-
-const authMiddleware = require('../middleware/auth.middleware');
-const adminMiddleware = require('../middleware/admin.middleware');
-const {
+import authMiddleware from '../middleware/auth.middleware.js';
+import adminMiddleware from '../middleware/admin.middleware.js';
+import {
   listStartups,
   approveStartup,
   rejectStartup,
-} = require('../controllers/admin.startup.controller');
+} from '../controllers/admin.startup.controller.js';
 
 router.get('/startups', authMiddleware, adminMiddleware, listStartups);
 router.patch('/startups/:id/approve', authMiddleware, adminMiddleware, approveStartup);
 router.patch('/startups/:id/reject', authMiddleware, adminMiddleware, rejectStartup);
 
-module.exports = router;
+export default router;

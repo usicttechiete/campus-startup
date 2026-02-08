@@ -1,12 +1,18 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const userController = require('../controllers/user.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+import {
+  getMyProfile,
+  getProfileById,
+  updateProfile,
+  requestAdminUpgrade,
+  requestStudentUpgrade,
+} from '../controllers/user.controller.js';
+import authMiddleware from '../middleware/auth.middleware.js';
 
-router.get('/me', authMiddleware, userController.getMyProfile);
-router.get('/profile/:id', authMiddleware, userController.getProfileById);
-router.put('/profile', authMiddleware, userController.updateProfile);
-router.post('/request-admin', authMiddleware, userController.requestAdminUpgrade);
-router.post('/request-student', authMiddleware, userController.requestStudentUpgrade);
+router.get('/me', authMiddleware, getMyProfile);
+router.get('/profile/:id', authMiddleware, getProfileById);
+router.put('/profile', authMiddleware, updateProfile);
+router.post('/request-admin', authMiddleware, requestAdminUpgrade);
+router.post('/request-student', authMiddleware, requestStudentUpgrade);
 
-module.exports = router;
+export default router;

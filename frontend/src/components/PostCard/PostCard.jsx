@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CommentSection from '../CommentSection/CommentSection.jsx';
 import { getLikeInfo, toggleLike } from '../../services/like.api.js';
@@ -118,15 +118,15 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showMenu]);
 
-  const loadLikeInfo = async () => {
+  const loadLikeInfo = useCallback(async () => {
     try {
       const info = await getLikeInfo(actualPostId);
       setLikeCount(info.count);
       setIsLiked(info.isLiked);
     } catch (e) { /* ignore */ }
-  };
+  }, [actualPostId]);
 
-  const handleLike = async () => {
+  const handleLike = useCallback(async () => {
     if (likeLoading) return;
     setLikeLoading(true);
     try {
@@ -135,9 +135,9 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       setLikeCount(result.likeCount);
     } catch (e) { /* ignore */ }
     setLikeLoading(false);
-  };
+  }, [likeLoading, actualPostId]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     try {
       if (navigator.share) {
         await navigator.share({ title, text: description, url: window.location.href });
@@ -146,9 +146,9 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
         alert('Link copied!');
       }
     } catch (e) { /* ignore */ }
-  };
+  }, [title, description]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!window.confirm('Delete this post?')) return;
     setDeleteLoading(true);
     try {
@@ -159,18 +159,18 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
     }
     setDeleteLoading(false);
     setShowMenu(false);
-  };
+  }, [actualPostId, onPostDeleted]);
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (!actualPostId) return;
     navigate(`/project/${actualPostId}`);
-  };
+  }, [actualPostId, navigate]);
 
-  const handleLetsBuildConfirm = () => {
+  const handleLetsBuildConfirm = useCallback(() => {
     setShowLetsBuildConfirm(true);
-  };
+  }, []);
 
-  const handleLetsBuild = async () => {
+  const handleLetsBuild = useCallback(async () => {
     if (!actualPostId || collabLoading || isOwner) return;
     setShowLetsBuildConfirm(false);
     setCollabLoading(true);
@@ -183,16 +183,35 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       notify({ message: e?.message || 'Could not join. You may have already joined.', variant: 'error' });
     }
     setCollabLoading(false);
-  };
+  }, [actualPostId, collabLoading, isOwner, onPostCollaborated, notify]);
 
   const showLetsBuild = (postType === 'project' || postType === 'startup_idea') && !isOwner;
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter' || e.key === ' ') { 
+      e.preventDefault(); 
+      handleCardClick(); 
+    }
+  }, [handleCardClick]);
+
+  const handleMenuClick = useCallback((e) => e.stopPropagation(), []);
+  const handleCommentClick = useCallback((e) => { e.stopPropagation(); setShowComments(true); }, []);
+  const handleLetsBuildClick = useCallback((e) => {
+    e.stopPropagation();
+    if (isCollaborator) return;
+    handleLetsBuildConfirm();
+  }, [isCollaborator, handleLetsBuildConfirm]);
+  const handleShareClick = useCallback((e) => { e.stopPropagation(); handleShare(); }, [handleShare]);
+  const handleConfirmClose = useCallback((e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }, []);
+  const handleCancelClose = useCallback((e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }, []);
+  const handleConfirmLetsBuild = useCallback((e) => { e.stopPropagation(); handleLetsBuild(); }, [handleLetsBuild]);
 
   return (
     <article
       role="button"
       tabIndex={0}
       onClick={handleCardClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(); } }}
+      onKeyDown={handleKeyDown}
       className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer active:bg-gray-50"
     >
       {/* Header - Twitter style */}
@@ -228,7 +247,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
             </span>
           )}
           {isOwner && (
-            <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <div className="relative" onClick={handleMenuClick}>
               <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <MoreIcon className="w-4 h-4" />
               </button>
@@ -274,7 +293,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       )}
 
       {/* Actions - Twitter style */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100" onClick={handleMenuClick}>
         <button
           onClick={handleLike}
           disabled={likeLoading}
@@ -288,7 +307,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
         </button>
 
         <button
-          onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+          onClick={handleCommentClick}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
         >
           <CommentIcon className="w-4 h-4" />
@@ -297,11 +316,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
         {showLetsBuild && (
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isCollaborator) return;
-              handleLetsBuildConfirm();
-            }}
+            onClick={handleLetsBuildClick}
             disabled={collabLoading}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition ${isCollaborator
               ? 'text-amber-600 bg-amber-50'
@@ -314,7 +329,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
         )}
 
         <button
-          onClick={(e) => { e.stopPropagation(); handleShare(); }}
+          onClick={handleShareClick}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
         >
           <ShareIcon className="w-4 h-4" />
@@ -329,11 +344,11 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       {showLetsBuildConfirm && (
         <div
           className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
-          onClick={(e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }}
+          onClick={handleConfirmClose}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-md"
+            onClick={handleCancelClose}
           >
             <p className="text-sm font-medium text-gray-900">Join this project?</p>
             <p className="mt-1 text-xs text-gray-500">
@@ -342,14 +357,14 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setShowLetsBuildConfirm(false); }}
+                onClick={handleCancelClose}
                 className="flex-1 rounded-full border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); handleLetsBuild(); }}
+                onClick={handleConfirmLetsBuild}
                 disabled={collabLoading}
                 className="flex-1 rounded-full bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
               >

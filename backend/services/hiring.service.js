@@ -1,5 +1,5 @@
-const Job = require('../models/Job');
-const Application = require('../models/Application');
+import Job from '../models/Job.js';
+import Application from '../models/Application.js';
 
 const getJobs = async (filters) => {
   try {
@@ -95,7 +95,7 @@ const updateApplication = async (applicationId, status) => {
   }
 };
 
-module.exports = {
+export {
   getJobs,
   getJobById,
   createJob,

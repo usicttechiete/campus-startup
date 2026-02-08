@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Comment = {
   async findByPostId(postId) {
@@ -61,4 +61,4 @@ const Comment = {
   },
 };
 
-module.exports = Comment;
+export default Comment;

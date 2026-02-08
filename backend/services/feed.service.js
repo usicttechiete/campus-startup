@@ -1,5 +1,4 @@
-const Post = require('../models/Post');
-const notificationService = require('./notification.service');
+import Post from '../models/Post.js';
 
 const getFeed = async (filters) => {
   try {
@@ -72,7 +71,8 @@ const joinPost = async (postId, userId) => {
     if (!post) throw new Error('Post not found');
     await Post.addCollaborator(postId, userId);
     if (post.author_id && post.author_id !== userId) {
-      await notificationService.createLetsBuildNotification(
+      const { createLetsBuildNotification } = await import('./notification.service.js');
+      await createLetsBuildNotification(
         post.author_id,
         userId,
         postId,
@@ -109,7 +109,7 @@ const deletePost = async (postId, userId) => {
   }
 };
 
-module.exports = {
+export {
   getFeed,
   createPost,
   joinPost,

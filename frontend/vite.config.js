@@ -5,5 +5,19 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true,
+    fs: {
+      strict: false,
+    },
+    watch: {
+      usePolling: true,
+      interval: 50,
+      ignored: ['!**/node_modules/**'],
+    },
   },
+  build: {
+    emptyOutDir: true,
+  },
+  clearScreen: false,
+  logLevel: 'info',
 });

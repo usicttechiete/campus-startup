@@ -1,4 +1,4 @@
-const Startup = require('../models/startup');
+import Startup from '../models/startup.js';
 
 const listStartups = async (req, res) => {
   try {
@@ -67,7 +67,7 @@ const rejectStartup = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   listStartups,
   approveStartup,
   rejectStartup,

@@ -1,15 +1,19 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const commentController = require('../controllers/comment.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+import {
+  getComments,
+  createComment,
+  deleteComment,
+} from '../controllers/comment.controller.js';
+import authMiddleware from '../middleware/auth.middleware.js';
 
 // Get comments for a specific post
-router.get('/posts/:postId/comments', authMiddleware, commentController.getComments);
+router.get('/posts/:postId/comments', authMiddleware, getComments);
 
 // Create a new comment on a post
-router.post('/posts/:postId/comments', authMiddleware, commentController.createComment);
+router.post('/posts/:postId/comments', authMiddleware, createComment);
 
 // Delete a comment (only by the author)
-router.delete('/comments/:commentId', authMiddleware, commentController.deleteComment);
+router.delete('/comments/:commentId', authMiddleware, deleteComment);
 
-module.exports = router;
+export default router;

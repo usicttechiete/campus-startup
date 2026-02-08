@@ -1,9 +1,17 @@
-const hiringService = require('../services/hiring.service');
+import {
+  getJobs,
+  getJobById,
+  createJob,
+  applyForJob,
+  getApplicantsForJob,
+  getUserApplications,
+  updateApplication,
+} from '../services/hiring.service.js';
 
 const getInternshipsController = async (req, res) => {
   try {
     // Re-using the getJobs service, filtering for internships
-    const internships = await hiringService.getJobs({ ...req.query, type: 'Internship' });
+    const internships = await getJobs({ ...req.query, type: 'Internship' });
     res.status(200).json({ results: internships });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -13,7 +21,7 @@ const getInternshipsController = async (req, res) => {
 const getInternshipByIdController = async (req, res) => {
   try {
     const { id } = req.params;
-    const internship = await hiringService.getJobById(id);
+    const internship = await getJobById(id);
     if (!internship || internship.type !== 'Internship') {
       return res.status(404).json({ message: 'Internship not found' });
     }
@@ -26,7 +34,7 @@ const getInternshipByIdController = async (req, res) => {
 const applyToInternshipController = async (req, res) => {
   try {
     const { id: internshipId } = req.params;
-    const result = await hiringService.applyForJob(internshipId, req.user.id, req.body);
+    const result = await applyForJob(internshipId, req.user.id, req.body);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -36,7 +44,7 @@ const applyToInternshipController = async (req, res) => {
 const getMyApplicationsController = async (req, res) => {
   try {
     console.log('getMyApplicationsController: user', req.user.id);
-    const applications = await hiringService.getUserApplications(req.user.id);
+    const applications = await getUserApplications(req.user.id);
     console.log('getMyApplicationsController: results count', applications?.length);
     res.status(200).json({ results: applications });
   } catch (error) {
@@ -45,7 +53,7 @@ const getMyApplicationsController = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getInternshipsController,
   getInternshipByIdController,
   applyToInternshipController,

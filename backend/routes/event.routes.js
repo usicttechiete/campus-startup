@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 // Placeholder for event controller
-// const eventController = require('../controllers/event.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+// import eventController from '../controllers/event.controller.js';
+import authMiddleware from '../middleware/auth.middleware.js';
 
 router.get('/', authMiddleware, (req, res) => res.json([])); // Placeholder
 router.post('/:id/team', authMiddleware, (req, res) => res.json({ message: 'OK' })); // Placeholder
 
-module.exports = router;
+export default router;

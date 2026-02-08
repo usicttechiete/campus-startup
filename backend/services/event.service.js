@@ -1,4 +1,4 @@
-const Event = require('../models/Event');
+import Event from '../models/Event.js';
 
 const getEvents = async () => {
   try {
@@ -22,7 +22,7 @@ const joinTeam = async (eventId, teamMembers) => {
   return { message: 'Team registration is not yet implemented' };
 };
 
-module.exports = {
+export {
   getEvents,
   joinTeam,
 };

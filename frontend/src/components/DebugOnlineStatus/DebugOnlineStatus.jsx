@@ -13,9 +13,6 @@ const DebugOnlineStatus = ({ userId }) => {
 
     const checkDatabase = async () => {
       try {
-        console.log('Debug: Checking database for userId:', userId);
-        
-        // Check if user exists and get current status
         const { data, error } = await supabase
           .from('users')
           .select('id, is_online, last_seen, available_to_work, email')
@@ -26,7 +23,6 @@ const DebugOnlineStatus = ({ userId }) => {
           console.error('Debug: Database error:', error);
           setDbStatus(`Error: ${error.message}`);
         } else if (data) {
-          console.log('Debug: User data:', data);
           setUserInfo(data);
           setDbStatus('Connected');
         } else {
@@ -45,7 +41,6 @@ const DebugOnlineStatus = ({ userId }) => {
     if (!userId) return;
     
     try {
-      console.log('Debug: Testing update...');
       const { error } = await supabase
         .from('users')
         .update({ 
@@ -58,7 +53,6 @@ const DebugOnlineStatus = ({ userId }) => {
         console.error('Debug: Update error:', error);
         alert(`Update failed: ${error.message}`);
       } else {
-        console.log('Debug: Update successful');
         alert('Update successful! Check console.');
         // Refresh data
         window.location.reload();

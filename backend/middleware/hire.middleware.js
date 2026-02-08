@@ -1,5 +1,5 @@
-const supabase = require('../config/db');
-const Startup = require('../models/startup');
+import supabase from '../config/db.js';
+import Startup from '../models/startup.js';
 
 const hireMiddleware = async (req, res, next) => {
   const { user } = req;
@@ -35,4 +35,4 @@ const hireMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = hireMiddleware;
+export default hireMiddleware;

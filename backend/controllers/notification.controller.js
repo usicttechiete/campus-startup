@@ -1,9 +1,12 @@
-const notificationService = require('../services/notification.service');
+import {
+  getMyNotifications,
+  markAsRead,
+} from '../services/notification.service.js';
 
 const getMyNotificationsController = async (req, res) => {
   try {
     const { unread_only } = req.query;
-    const notifications = await notificationService.getMyNotifications(req.user.id, {
+    const notifications = await getMyNotifications(req.user.id, {
       unreadOnly: unread_only === 'true',
     });
     res.status(200).json({ results: notifications });
@@ -15,14 +18,14 @@ const getMyNotificationsController = async (req, res) => {
 const markAsReadController = async (req, res) => {
   try {
     const { id } = req.params;
-    const updated = await notificationService.markAsRead(id, req.user.id);
+    const updated = await markAsRead(id, req.user.id);
     res.status(200).json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-module.exports = {
+export {
   getMyNotificationsController,
   markAsReadController,
 };

@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Notification = {
   async create({ recipient_id, actor_id, type = 'lets_build', post_id, message }) {
@@ -37,4 +37,4 @@ const Notification = {
   },
 };
 
-module.exports = Notification;
+export default Notification;

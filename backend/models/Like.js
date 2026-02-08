@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Like = {
   async findByPostId(postId) {
@@ -105,4 +105,4 @@ const Like = {
   },
 };
 
-module.exports = Like;
+export default Like;

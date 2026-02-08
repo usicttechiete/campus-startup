@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Post = {
   async findAll(filters = {}) {
@@ -87,4 +87,4 @@ const Post = {
   },
 };
 
-module.exports = Post;
+export default Post;

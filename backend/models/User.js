@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const User = {
   async findByEmail(email) {
@@ -49,4 +49,4 @@ const User = {
   },
 };
 
-module.exports = User;
+export default User;

@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const adminMiddleware = async (req, res, next) => {
   const { user } = req;
@@ -24,4 +24,4 @@ const adminMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = adminMiddleware;
+export default adminMiddleware;

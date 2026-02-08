@@ -1,11 +1,16 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const internshipController = require('../controllers/internship.controller');
-const authMiddleware = require('../middleware/auth.middleware');
+import {
+  getInternshipsController,
+  getInternshipByIdController,
+  applyToInternshipController,
+  getMyApplicationsController,
+} from '../controllers/internship.controller.js';
+import authMiddleware from '../middleware/auth.middleware.js';
 
-router.get('/', authMiddleware, internshipController.getInternshipsController);
-router.get('/my/applications', authMiddleware, internshipController.getMyApplicationsController);
-router.get('/:id', authMiddleware, internshipController.getInternshipByIdController);
-router.post('/:id/apply', authMiddleware, internshipController.applyToInternshipController);
+router.get('/', authMiddleware, getInternshipsController);
+router.get('/my/applications', authMiddleware, getMyApplicationsController);
+router.get('/:id', authMiddleware, getInternshipByIdController);
+router.post('/:id/apply', authMiddleware, applyToInternshipController);
 
-module.exports = router;
+export default router;

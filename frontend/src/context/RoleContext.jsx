@@ -18,14 +18,10 @@ export const RoleProvider = ({ children }) => {
 
     setRoleLoading(true);
     setRoleError(null);
-    // eslint-disable-next-line no-console
-    console.log('RoleContext: Session found, attempting to fetch user role...');
     try {
       const data = await getMe();
       if (data && data.role) {
         setRole(data.role);
-        // eslint-disable-next-line no-console
-        console.log('RoleContext: Role fetched successfully:', data.role);
       } else {
         throw new Error('API response did not contain a user role.');
       }
@@ -54,15 +50,11 @@ export const RoleProvider = ({ children }) => {
 
       setRoleLoading(true);
       setRoleError(null);
-      // eslint-disable-next-line no-console
-      console.log('RoleContext: Session found, attempting to fetch user role...');
       try {
         const data = await getMe();
         if (!ignore) {
           if (data && data.role) {
             setRole(data.role);
-            // eslint-disable-next-line no-console
-            console.log('RoleContext: Role fetched successfully:', data.role);
           } else {
             throw new Error('API response did not contain a user role.');
           }

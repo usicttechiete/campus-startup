@@ -262,7 +262,6 @@ const StudentProfile = () => {
     setApplicationsLoading(true);
     try {
       const data = await fetchMyApplications();
-      console.log('STUDENT_PROFILE: My Applications raw data:', data);
       setMyApplications(data?.results || []);
     } catch (err) {
       console.error('Failed to load applications:', err);

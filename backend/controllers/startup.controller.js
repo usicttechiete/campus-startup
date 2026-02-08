@@ -1,5 +1,5 @@
-const Startup = require('../models/startup');
-const supabase = require('../config/db');
+import Startup from '../models/startup.js';
+import supabase from '../config/db.js';
 
 const normalizeStage = (stage) => {
   if (!stage) return stage;
@@ -168,7 +168,7 @@ const getStartupById = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createStartup,
   getMyStartup,
   getStartupById,

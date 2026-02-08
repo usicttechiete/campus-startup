@@ -1,4 +1,4 @@
-const supabase = require('../config/db');
+import supabase from '../config/db.js';
 
 const Application = {
   async findByJobId(jobId) {
@@ -60,4 +60,4 @@ const Application = {
   },
 };
 
-module.exports = Application;
+export default Application;
