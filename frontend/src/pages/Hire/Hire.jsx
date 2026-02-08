@@ -37,12 +37,19 @@ const UsersIcon = ({ className }) => (
   </svg>
 );
 
+const ChevronDownIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
 const Hire = () => {
   const [jobs, setJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [applicants, setApplicants] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
+  const [isApplicantsOpen, setIsApplicantsOpen] = useState(false);
   const [jobError, setJobError] = useState(null);
   const [applicantError, setApplicantError] = useState(null);
   const [jobForm, setJobForm] = useState(jobFormTemplate);
@@ -273,75 +280,83 @@ const Hire = () => {
                 )}
 
                 <div className="border-t border-divider pt-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <UsersIcon className="h-4 w-4 text-text-muted" />
-                    <span className="text-sm font-medium text-text-secondary">Applicants</span>
-                    <Badge variant="neutral" className="text-[10px]">{applicants.length}</Badge>
-                  </div>
-
-                  {loadingApplicants ? (
-                    <div className="flex justify-center py-6">
-                      <Loader size="sm" label="Loading" />
+                  <button
+                    onClick={() => setIsApplicantsOpen(!isApplicantsOpen)}
+                    className="flex w-full items-center justify-between rounded-xl bg-card border border-border/60 p-3 transition hover:bg-surface/50 mb-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="h-4 w-4 text-text-muted" />
+                      <span className="text-sm font-medium text-text-secondary">
+                        View Applicants <span className="text-xs font-normal text-text-muted">({applicants.length})</span>
+                      </span>
                     </div>
-                  ) : applicantError ? (
-                    <p className="text-xs text-danger">{applicantError}</p>
-                  ) : (
-                    <div className="space-y-3">
-                      {applicants.map((applicant) => (
-                        <div
-                          key={applicant.id}
-                          className="rounded-lg bg-bg-glass p-3 border border-border/50"
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div>
-                              <p className="text-sm font-medium text-text-primary">{applicant.name}</p>
-                              <p className="text-xs text-text-muted">{applicant.degree || applicant.program}</p>
-                            </div>
-                            <div className="flex gap-1">
-                              <Badge variant="accent">{formatTrustScore(applicant.trust_score)}</Badge>
-                              <Badge variant="secondary">{formatLevel(applicant.level)}</Badge>
-                            </div>
-                          </div>
+                    <ChevronDownIcon className={`h-4 w-4 text-text-muted transition-transform duration-200 ${isApplicantsOpen ? 'rotate-180' : ''}`} />
+                  </button>
 
-                          {applicant.skills?.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-3">
-                              {applicant.skills.slice(0, 3).map((skill) => (
-                                <span key={skill} className="text-[10px] bg-bg-elevated px-2 py-0.5 rounded-full text-text-muted">
-                                  {skill}
-                                </span>
+                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isApplicantsOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    {loadingApplicants ? (
+                      <div className="flex justify-center py-6">
+                        <Loader size="sm" label="Loading" />
+                      </div>
+                    ) : applicantError ? (
+                      <p className="text-xs text-danger">{applicantError}</p>
+                    ) : (
+                      <div className="space-y-2 pb-2">
+                        {applicants.map((app) => (
+                          <div
+                            key={app.id}
+                            className="rounded-lg bg-bg-glass p-3 border border-border/50"
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div>
+                                <p className="text-sm font-medium text-text-primary">{app.applicant?.name || 'Anonymous'}</p>
+                                <p className="text-xs text-text-muted">
+                                  {app.applicant?.course || app.applicant?.branch || 'Student'} • {app.applicant?.year ? `Year ${app.applicant.year}` : ''}
+                                </p>
+                              </div>
+                              {app.resume_link ? (
+                                <a
+                                  href={app.resume_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-[10px] font-medium text-primary bg-primary/10 px-2 py-1 rounded-full hover:bg-primary/20 transition-colors"
+                                >
+                                  Resume ↗
+                                </a>
+                              ) : (
+                                <span className="text-[10px] text-text-disabled italic">No Resume</span>
+                              )}
+                            </div>
+
+                            <div className="flex gap-1.5 flex-wrap">
+                              {statusOptions.map((status) => (
+                                <button
+                                  key={status}
+                                  type="button"
+                                  onClick={() => handleStatusUpdate(app.id, status)}
+                                  disabled={statusLoadingId === app.id}
+                                  className={`chip text-[10px] py-1 ${status === app.status ? 'chip-active' : ''
+                                    } ${status === 'Rejected' ? 'hover:border-danger/30' : ''}`}
+                                >
+                                  {statusLoadingId === app.id && status !== app.status ? (
+                                    <Loader size="sm" inline />
+                                  ) : (
+                                    status
+                                  )}
+                                </button>
                               ))}
                             </div>
-                          )}
-
-                          <div className="flex gap-1.5">
-                            {statusOptions.map((status) => (
-                              <button
-                                key={status}
-                                type="button"
-                                onClick={() => handleStatusUpdate(applicant.id, status)}
-                                disabled={statusLoadingId === applicant.id}
-                                className={`chip text-[10px] py-1 ${status === applicant.status ? 'chip-active' : ''
-                                  } ${status === 'Rejected' ? 'hover:border-danger/30' : ''}`}
-                              >
-                                {statusLoadingId === applicant.id && status !== applicant.status ? (
-                                  <Loader size="sm" inline />
-                                ) : (
-                                  status
-                                )}
-                              </button>
-                            ))}
                           </div>
-                        </div>
-                      ))}
+                        ))}
 
-                      {!applicants.length && (
-                        <div className="py-6 text-center">
-                          <p className="text-sm text-text-muted">No applicants yet</p>
-                          <p className="text-xs text-text-disabled mt-1">Share this role to get started</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        {!applicants.length && (
+                          <div className="py-4 text-center">
+                            <p className="text-sm text-text-muted">No applicants yet</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Card>
             )}

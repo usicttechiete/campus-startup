@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -14,6 +15,7 @@ const RocketIcon = ({ className }) => (
 
 const Login = () => {
   const { signInWithPassword, signUp, authLoading, authError } = useAuth();
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,6 +51,8 @@ const Login = () => {
         setYear('');
       } else {
         await signInWithPassword(email, password);
+        // Redirect to home after successful login (hardcoded for security)
+        navigate('/', { replace: true });
       }
     } catch (err) {
       setError(err.message || `Failed to ${isSignUp ? 'sign up' : 'sign in'}`);

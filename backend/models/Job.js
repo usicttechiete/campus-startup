@@ -24,6 +24,18 @@ const Job = {
     return data;
   },
 
+  async findByCompanyId(companyId) {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data || [];
+  },
+
   async create(jobData) {
     const { data, error } = await supabase.from('jobs').insert(jobData).select().single();
     if (error) {

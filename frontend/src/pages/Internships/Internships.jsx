@@ -192,14 +192,14 @@ const Internships = () => {
 
       {/* Search Bar */}
       <div className="relative">
+        <SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted pointer-events-none" />
         <input
           type="text"
           value={filters.search}
           onChange={handleFilterChange('search')}
           placeholder="Search internships..."
-          className="input pl-10"
+          className="input pl-12"
         />
-        <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
       </div>
 
       {/* Filter Toggle & Active Filters */}

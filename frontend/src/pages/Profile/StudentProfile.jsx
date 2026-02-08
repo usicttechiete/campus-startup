@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Card from '../../components/Card/Card.jsx';
@@ -144,6 +144,9 @@ const StudentProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('about');
+
+  // Ref for scrolling to activity section when notification is clicked
+  const activitySectionRef = useRef(null);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -410,7 +413,6 @@ const StudentProfile = () => {
     };
 
     loadStartup();
-    loadStartup();
   }, [activeTab, role, startupLoadedOnce]);
 
   useEffect(() => {
@@ -482,8 +484,6 @@ const StudentProfile = () => {
   const eventsParticipated = useMemo(() => {
     if (!profile) return [];
     if (Array.isArray(profile.events_participated)) return profile.events_participated;
-    if (Array.isArray(profile.events_attended_list)) return profile.events_attended_list;
-    return [];
     if (Array.isArray(profile.events_attended_list)) return profile.events_attended_list;
     return [];
   }, [profile]);
@@ -1245,7 +1245,11 @@ const StudentProfile = () => {
                 key={n.id}
                 type="button"
                 onClick={() => {
-                  if (n.post_id) navigate(`/project/${n.post_id}`);
+                  // Scroll to Posts tile (Activity section) instead of navigating away
+                  if (n.post_id && activitySectionRef.current) {
+                    setActivityTab('projects');
+                    activitySectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
                   if (!n.read_at) markNotificationRead(n.id).then(() => loadNotifications()).catch(() => { });
                 }}
                 className={`w-full rounded-xl border border-border/60 p-4 text-left transition hover:bg-surface/50 ${n.read_at ? 'bg-surface/30' : 'bg-primary/5 border-primary/20'}`}
@@ -1569,13 +1573,14 @@ const StudentProfile = () => {
                   </Card>
                 )}
               </motion.div>
-            </div>
-          </aside>
+
+            </div >
+          </aside >
 
           {/* Main Content - Right Column */}
-          <main className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0">
+          < main className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0" >
             {/* Tabs Section */}
-            <motion.div
+            < motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -1621,15 +1626,15 @@ const StudentProfile = () => {
                   </AnimatePresence>
                 </div>
               </Card>
-            </motion.div>
+            </motion.div >
 
             {/* Activity Section */}
-            <motion.div
+            < motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Card className="backdrop-blur-md shadow-xl rounded-[2rem] p-4 sm:p-6 lg:p-10 space-y-6">
+              <Card ref={activitySectionRef} className="backdrop-blur-md shadow-xl rounded-[2rem] p-4 sm:p-6 lg:p-10 space-y-6">
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <h2 className="text-2xl font-bold text-body tracking-tight">Your Activity</h2>
@@ -1725,13 +1730,13 @@ const StudentProfile = () => {
                   )}
                 </div>
               </Card>
-            </motion.div>
-          </main>
-        </div>
-      </div>
+            </motion.div >
+          </main >
+        </div >
+      </div >
 
       {/* Modals & Overlays */}
-      <AnimatePresence>
+      < AnimatePresence >
 
 
         {showForm && (
@@ -1837,8 +1842,8 @@ const StudentProfile = () => {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence >
+    </div >
   );
 };
 
