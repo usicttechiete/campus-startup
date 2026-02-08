@@ -1,2 +1,4 @@
 {
+  "css.lint.unknownAtRules": "ignore",
+  "kiroAgent.configureMCP": "Disabled"
 }

@@ -1,78 +1,80 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       },
       colors: {
-        // Light Background Palette
+        // Background Palette
         bg: {
-          DEFAULT: '#f8fafc',
-          elevated: '#ffffff',
-          card: '#ffffff',
-          subtle: '#f1f5f9',
+          DEFAULT: 'var(--color-bg)',
+          elevated: 'var(--color-bg-elevated)',
+          card: 'var(--color-bg-card)',
+          subtle: 'var(--color-bg-subtle)',
         },
-        // Primary - Electric Blue
+        // Primary
         primary: {
-          DEFAULT: '#2563eb',
-          hover: '#1d4ed8',
-          soft: 'rgba(37, 99, 235, 0.08)',
+          DEFAULT: 'var(--color-primary)',
+          hover: 'var(--color-primary-hover)',
+          soft: 'var(--color-primary-soft)',
         },
-        // Secondary - Indigo
+        // Secondary
         secondary: {
-          DEFAULT: '#6366f1',
-          soft: 'rgba(99, 102, 241, 0.08)',
+          DEFAULT: 'var(--color-secondary)',
+          soft: 'var(--color-secondary-soft)',
         },
-        // Accent - Teal
+        // Accent
         accent: {
-          DEFAULT: '#0d9488',
-          soft: 'rgba(13, 148, 136, 0.08)',
+          DEFAULT: 'var(--color-accent)',
+          soft: 'var(--color-accent-soft)',
         },
         // Semantic
         success: {
-          DEFAULT: '#10b981',
-          soft: 'rgba(16, 185, 129, 0.1)',
+          DEFAULT: 'var(--color-success)',
+          soft: 'var(--color-success-soft)',
         },
         warning: {
-          DEFAULT: '#f59e0b',
-          soft: 'rgba(245, 158, 11, 0.1)',
+          DEFAULT: 'var(--color-warning)',
+          soft: 'var(--color-warning-soft)',
         },
         danger: {
-          DEFAULT: '#ef4444',
-          soft: 'rgba(239, 68, 68, 0.1)',
+          DEFAULT: 'var(--color-danger)',
+          soft: 'var(--color-danger-soft)',
         },
         // Text
         text: {
-          primary: '#0f172a',
-          secondary: '#334155',
-          muted: '#64748b',
-          disabled: '#94a3b8',
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
+          inverted: 'var(--color-text-inverted)',
+          disabled: '#94a3b8', // Keep literal for disabled
         },
         // Borders
         border: {
-          DEFAULT: '#e2e8f0',
-          hover: '#cbd5e1',
+          DEFAULT: 'var(--color-border)',
+          hover: 'var(--color-border-hover)',
         },
-        divider: '#e2e8f0',
+        divider: 'var(--color-divider)',
       },
       maxWidth: {
         'app': '480px',
       },
       borderRadius: {
-        'sm': '6px',
-        'md': '10px',
-        'lg': '14px',
-        'xl': '18px',
-        '2xl': '22px',
+        'sm': 'var(--radius-sm)',
+        'md': 'var(--radius-md)',
+        'lg': 'var(--radius-lg)',
+        'xl': 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
       },
       boxShadow: {
-        'sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
-        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-        'glow': '0 4px 14px rgba(37, 99, 235, 0.25)',
-        'card': '0 1px 3px rgba(0, 0, 0, 0.08)',
+        'sm': 'var(--shadow-sm)',
+        'md': 'var(--shadow-md)',
+        'lg': 'var(--shadow-lg)',
+        'glow': 'var(--shadow-glow)',
+        'card': 'var(--shadow-card)',
       },
       animation: {
         'fade-in': 'fade-in 0.25s ease-out',
