@@ -17,6 +17,7 @@ import EventDetail from '../pages/Events/EventDetail.jsx';
 import ProjectDetail from '../pages/Projects/ProjectDetail.jsx';
 import InternshipDetail from '../pages/Internships/InternshipDetail.jsx';
 import StartupDetail from '../pages/Startups/StartupDetail.jsx';
+import Notifications from '../pages/Notifications/Notifications.jsx';
 
 // AI Chat Context
 const AIChatContext = createContext();
@@ -76,6 +77,7 @@ const App = () => {
                   <Route path="internship/:id" element={<InternshipDetail />} />
                   <Route path="startup/:id" element={<StartupDetail />} />
                   <Route path="profile" element={<Profile />} />
+                  <Route path="notifications" element={<Notifications />} />
                   <Route path="internships" element={<Internships />} />
                   <Route path="hire" element={
                     <ProtectedRoute requiredRole="admin">

@@ -20,11 +20,7 @@ import { getMyNotifications, markNotificationRead } from '../../services/notific
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
-  { key: 'about', label: 'About' },
-  { key: 'skills', label: 'Skills' },
-  { key: 'teams', label: 'Teams Joined' },
-  { key: 'events', label: 'Events' },
-  { key: 'notifications', label: 'Notifications' },
+  { key: 'startup', label: 'My Startup' },
 ];
 
 const initialFormState = {
@@ -67,6 +63,13 @@ const SunIcon = ({ className }) => (
 const MoonIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+
+const BellIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 
@@ -143,7 +146,7 @@ const StudentProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('about');
+  const [activeTab, setActiveTab] = useState('startup');
 
   // Ref for scrolling to activity section when notification is clicked
   const activitySectionRef = useRef(null);
@@ -325,9 +328,7 @@ const StudentProfile = () => {
   }, [profile?.resume_link]);
 
   const tabsToRender = useMemo(() => {
-    if (role === 'student') {
-      return [...tabConfig, { key: 'applied', label: 'Applied' }, { key: 'startup', label: 'Add Your Startup' }];
-    }
+    // Only showing startup tab for now as per new design
     return tabConfig;
   }, [role]);
 
@@ -364,7 +365,7 @@ const StudentProfile = () => {
 
   useEffect(() => {
     if (role !== 'student' && activeTab === 'startup') {
-      setActiveTab('about');
+      // Handle non-student role if necessary
     }
   }, [role, activeTab]);
 
@@ -488,7 +489,7 @@ const StudentProfile = () => {
     return [];
   }, [profile]);
 
-  const { projectsPosted, updatesPosted } = useMemo(() => {
+  const { projectsPosted, updatesPosted, appliedJobs } = useMemo(() => {
     const projects = [];
     const updates = [];
     activityPosts.forEach((post) => {
@@ -498,8 +499,8 @@ const StudentProfile = () => {
         updates.push(post);
       }
     });
-    return { projectsPosted: projects, updatesPosted: updates };
-  }, [activityPosts]);
+    return { projectsPosted: projects, updatesPosted: updates, appliedJobs: myApplications };
+  }, [activityPosts, myApplications]);
 
   const handleAddSkill = () => {
     const trimmed = skillInputValue.trim();
@@ -654,682 +655,278 @@ const StudentProfile = () => {
   const renderTabContent = () => {
     if (!profile) return null;
 
-    switch (activeTab) {
-      case 'startup':
-        if (role !== 'student') {
-          return null;
-        }
+    if (activeTab === 'startup') {
+      // Startup Logic (Register or View)
+      // Note: Logic copied and simplified from previous 'startup' case
+      const reapplyDate = startupReapplyAfter ? new Date(startupReapplyAfter) : null;
+      const isReapplyLocked =
+        startupStatus === 'REJECTED' && reapplyDate && !Number.isNaN(reapplyDate.getTime()) && new Date() <= reapplyDate;
 
-        if (startupLoading) {
-          return (
-            <div className="flex h-64 items-center justify-center">
-              <Loader label="Loading startup details..." />
+      if (startupLoading) {
+        return (
+          <div className="flex h-64 items-center justify-center">
+            <Loader label="Loading startup details..." />
+          </div>
+        );
+      }
+
+      if (startupError) {
+        return (
+          <div className="rounded-2xl border border-danger/20 bg-danger/5 p-6 text-center text-danger">
+            <p className="font-medium">{startupError}</p>
+          </div>
+        );
+      }
+
+      if (startupStatus === 'PENDING') {
+        return (
+          <div className="rounded-[2rem] border border-blue-500/20 bg-blue-500/5 p-8 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <span className="text-2xl">⏳</span>
             </div>
-          );
-        }
-
-        if (startupError) {
-          return (
-            <div className="rounded-2xl border border-danger/20 bg-danger/5 p-6 text-center text-danger">
-              <p className="font-medium">{startupError}</p>
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold text-blue-600">Application Under Review</h3>
+              <p className="text-body/80">{startupStatusMessage || 'Your startup application is currently being reviewed by the administration.'}</p>
             </div>
-          );
-        }
+          </div>
+        );
+      }
 
-        const reapplyDate = startupReapplyAfter ? new Date(startupReapplyAfter) : null;
-        const isReapplyLocked =
-          startupStatus === 'REJECTED' && reapplyDate && !Number.isNaN(reapplyDate.getTime()) && new Date() <= reapplyDate;
-
-        if (startupStatus === 'PENDING') {
-          return (
-            <div className="rounded-[2rem] border border-blue-500/20 bg-blue-500/5 p-8 text-center space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <span className="text-2xl">⏳</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-blue-600">Application Under Review</h3>
-                <p className="text-body/80">{startupStatusMessage || 'Your startup application is currently being reviewed by the administration.'}</p>
-              </div>
+      if (startupStatus === 'REJECTED' && isReapplyLocked) {
+        return (
+          <div className="rounded-[2rem] border border-danger/20 bg-danger/5 p-8 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-danger/10 flex items-center justify-center">
+              <span className="text-2xl">❌</span>
             </div>
-          );
-        }
-
-        if (startupStatus === 'REJECTED' && isReapplyLocked) {
-          return (
-            <div className="rounded-[2rem] border border-danger/20 bg-danger/5 p-8 text-center space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-full bg-danger/10 flex items-center justify-center">
-                <span className="text-2xl">❌</span>
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-danger">Application Declined</h3>
-                <p className="text-body/80">{startupStatusMessage || 'Your application was not approved at this time.'}</p>
-                <p className="text-sm text-muted pt-2">You can reapply after {reapplyDate.toLocaleString()}.</p>
-              </div>
+            <div className="space-y-1">
+              <h3 className="text-xl font-bold text-danger">Application Declined</h3>
+              <p className="text-body/80">{startupStatusMessage || 'Your application was not approved at this time.'}</p>
+              <p className="text-sm text-muted pt-2">You can reapply after {reapplyDate.toLocaleString()}.</p>
             </div>
-          );
-        }
+          </div>
+        );
+      }
 
-        if (startupStatus === 'APPROVED' && myStartup) {
-          return (
-            <div className="space-y-6">
-              <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden group hover:bg-white/10 transition-all duration-300">
-                <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
-
-                <div className="relative flex flex-col sm:flex-row justify-between gap-4 sm:items-start">
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-bold text-body tracking-tight">{myStartup.name}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="neutral" className="bg-white/50 backdrop-blur border border-white/20">
-                        {myStartup.domain || 'Tech'}
-                      </Badge>
-                      <Badge variant="primary" className="bg-primary/10 text-primary border border-primary/20">
-                        {myStartup.stage || 'Early Stage'}
-                      </Badge>
-                      {myStartup.revenue && (
-                        <Badge variant="success" className="bg-success/10 text-success border border-success/20">
-                          Generating Revenue
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => navigate(`/startup/${myStartup.id}`)}
-                      className="rounded-xl border border-white/10 hover:bg-white/20"
-                    >
-                      View Page
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="rounded-xl text-danger hover:bg-danger/10 border border-danger/10"
-                      onClick={handleDeactivateStartup}
-                      disabled={startupSubmitLoading}
-                    >
-                      {startupSubmitLoading ? <Loader size="sm" inline /> : 'Deactivate'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
-                  <div className="space-y-1">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted">Problem Solved</p>
-                    <p className="text-sm text-body leading-relaxed">{myStartup.problem}</p>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-body">
-                        {myStartup.total_members || 1}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted">Team Size</p>
-                        <p className="text-sm font-semibold text-body opacity-0">Hidden</p>
-                        {/* Visual alignment hack or just remove text-body line */}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                        👤
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted">Lead</p>
-                        <p className="text-sm font-bold text-body truncate">{myStartup.head_name}</p>
-                        <p className="text-xs text-muted truncate">{myStartup.head_email}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        const disableForm = startupSubmitLoading || startupStatus === 'PENDING' || startupStatus === 'APPROVED' || isReapplyLocked;
-
+      if (startupStatus === 'APPROVED' && myStartup) {
         return (
           <div className="space-y-6">
-            {startupStatus === 'REJECTED' && (
-              <div className="rounded-2xl bg-danger/5 border border-danger/10 p-4 flex gap-4 items-start">
-                <span className="text-xl">⚠️</span>
-                <div>
-                  <p className="text-sm font-bold text-danger">Previous Application Rejected</p>
-                  <p className="text-sm text-body/80 mt-1">{startupStatusMessage}</p>
-                  {reapplyDate && <p className="text-xs text-muted mt-2">Reapply available after {reapplyDate.toLocaleDateString()}</p>}
-                </div>
-              </div>
-            )}
+            <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden group hover:bg-white/10 transition-all duration-300">
+              <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-500 pointer-events-none" />
 
-            <form onSubmit={handleCreateStartup} className="space-y-6">
-              <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-sm p-6 sm:p-8 space-y-6 shadow-sm">
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                    🚀
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-body">Register Your Startup</h3>
-                    <p className="text-sm text-muted">Take the first step towards building your empire.</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Venture Name</label>
-                    <input
-                      value={startupName}
-                      onChange={(e) => { setStartupName(e.target.value); setStartupSubmitError(''); }}
-                      required
-                      disabled={disableForm}
-                      className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all font-medium"
-                      placeholder="Next Big Thing"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Domain / Industry</label>
-                    <input
-                      value={startupDomain}
-                      onChange={(e) => { setStartupDomain(e.target.value); setStartupSubmitError(''); }}
-                      disabled={disableForm}
-                      className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
-                      placeholder="e.g. EdTech, AI, Logistics"
-                    />
-                  </div>
-                </div>
-
+              <div className="relative flex flex-col sm:flex-row justify-between gap-4 sm:items-start">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Problem Statement</label>
-                  <textarea
-                    value={startupProblem}
-                    onChange={(e) => { setStartupProblem(e.target.value); setStartupSubmitError(''); }}
-                    rows={4}
-                    disabled={disableForm}
-                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all resize-none"
-                    placeholder="What burning problem are you solving? Be specific."
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Current Stage</label>
-                    <div className="relative">
-                      <select
-                        value={startupStage}
-                        onChange={(e) => { setStartupStage(e.target.value); setStartupSubmitError(''); }}
-                        disabled={disableForm}
-                        className="w-full appearance-none rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                      >
-                        <option value="IDEA">Idea Phase</option>
-                        <option value="MVP">MVP Ready</option>
-                        <option value="SCALING">Scaling Up</option>
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted">▼</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Team Size</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={startupTotalMembers}
-                      onChange={(e) => { setStartupTotalMembers(e.target.value); setStartupSubmitError(''); }}
-                      disabled={disableForm}
-                      className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
-                      placeholder="Ex: 3"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Revenue?</label>
-                    <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => setStartupRevenue(true)}
-                        className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${startupRevenue ? 'bg-white shadow-sm text-success' : 'text-muted hover:text-body'}`}
-                      >
-                        Yes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStartupRevenue(false)}
-                        className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${!startupRevenue ? 'bg-white shadow-sm text-body' : 'text-muted hover:text-body'}`}
-                      >
-                        No
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Head Name</label>
-                    <input
-                      value={startupHeadName}
-                      onChange={(e) => { setStartupHeadName(e.target.value); setStartupSubmitError(''); }}
-                      disabled={disableForm}
-                      className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Head Email</label>
-                    <input
-                      type="email"
-                      value={startupHeadEmail}
-                      onChange={(e) => { setStartupHeadEmail(e.target.value); setStartupSubmitError(''); }}
-                      disabled={disableForm}
-                      className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
-                    />
-                  </div>
-                </div>
-
-                {startupSubmitError && (
-                  <div className="p-4 bg-danger/5 border border-danger/10 rounded-xl">
-                    <p className="text-xs font-bold text-danger flex items-center gap-2">
-                      <span>⚠️</span> {startupSubmitError}
-                    </p>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="w-full py-6 rounded-2xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all"
-                  disabled={disableForm}
-                >
-                  {startupSubmitLoading ? <Loader size="sm" inline /> : 'Submit Application'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        );
-
-      case 'skills':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-lg font-bold text-body tracking-tight">Technical Arsenal</h3>
-              {isEditingSkills ? null : (
-                <Button size="sm" variant="subtle" onClick={() => {
-                  setIsEditingSkills(true);
-                  const nextSkills = Array.isArray(profile.skills) ? profile.skills : [];
-                  setSkillsDraft(nextSkills);
-                  setSkillInputValue('');
-                  setSkillsError('');
-                }} className="rounded-xl border border-border/50">
-                  Edit Skills
-                </Button>
-              )}
-            </div>
-
-            {isEditingSkills ? (
-              <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 sm:p-8 space-y-6 shadow-sm">
-                <div className="flex flex-wrap gap-2 min-h-[50px]">
-                  {skillsDraft.length ? (
-                    skillsDraft.map((skill) => (
-                      <span
-                        key={skill}
-                        className="animate-scale-in flex items-center gap-2 rounded-xl bg-white border border-border px-3 py-2 text-sm font-semibold text-body shadow-sm"
-                      >
-                        {skill}
-                        <button
-                          type="button"
-                          className="rounded-full p-0.5 hover:bg-danger/10 text-danger transition-colors"
-                          onClick={() => handleRemoveSkill(skill)}
-                        >
-                          <CloseIcon className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted italic p-2">No skills added. Add some below!</p>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    value={skillInputValue}
-                    onChange={(e) => { setSkillInputValue(e.target.value); setSkillsError(''); }}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-                    placeholder="Type a skill and hit Enter..."
-                    className="flex-1 rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all font-medium"
-                    autoFocus
-                  />
-                  <Button size="lg" variant="secondary" onClick={handleAddSkill} className="rounded-2xl px-8 shadow-sm">
-                    Add
-                  </Button>
-                </div>
-
-                {skillsError && <p className="text-sm font-bold text-danger px-2">{skillsError}</p>}
-
-                <div className="flex gap-3 pt-4 border-t border-white/10">
-                  <Button
-                    size="lg"
-                    variant="primary"
-                    className="rounded-2xl px-8 shadow-lg shadow-primary/20"
-                    onClick={handleSaveSkills}
-                    disabled={skillsLoading}
-                  >
-                    {skillsLoading ? <Loader size="sm" inline /> : 'Save Changes'}
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="ghost"
-                    className="rounded-2xl"
-                    onClick={handleCancelSkillsEdit}
-                    disabled={skillsLoading}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {(profile.skills || []).map((skill, index) => (
-                  <motion.div
-                    key={skill}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="rounded-2xl bg-white border border-border/60 px-4 py-3 text-sm font-semibold text-center text-body shadow-sm hover:shadow-md hover:border-primary/50 hover:scale-105 transition-all duration-300 cursor-default select-none"
-                  >
-                    {skill}
-                  </motion.div>
-                ))}
-                {!(profile.skills || []).length && (
-                  <div className="col-span-full py-12 text-center border-2 border-dashed border-border/50 rounded-3xl">
-                    <p className="text-muted">No skills listed yet.</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-
-      case 'teams':
-        return (
-          <div className="space-y-6">
-            <div className="px-2">
-              <h3 className="text-lg font-bold text-body tracking-tight">Teams & Collaborations</h3>
-            </div>
-            <div className="grid gap-4">
-              {teamsJoined.length ? (
-                teamsJoined.map((team) => (
-                  <div
-                    key={team.id || team.team_id || team.name}
-                    className="group rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-sm p-6 shadow-sm transition-all hover:shadow-md hover:bg-white/10"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <h4 className="text-lg font-bold text-body group-hover:text-primary transition-colors">{team.name || team.team_name}</h4>
-                        {team.event_name && <p className="text-sm font-medium text-muted">Event: {team.event_name}</p>}
-                      </div>
-                      <Badge variant="secondary" className="rounded-lg">
-                        {team.role || 'Member'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 rounded-[2.5rem] bg-white/5 border border-dashed border-white/20">
-                  <span className="text-4xl mb-4">👥</span>
-                  <p className="text-center text-muted font-medium">You haven't joined any teams yet.</p>
-                  <Button variant="ghost" className="mt-4 text-primary" onClick={() => navigate('/events')}>Explore Events</Button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 'applied':
-        return (
-          <div className="space-y-8">
-            {/* Resume Section with premium styling */}
-            <div className="space-y-3">
-              <div
-                className="group relative overflow-hidden flex cursor-pointer items-center justify-between rounded-[2rem] border border-white/20 bg-gradient-to-r from-blue-500/5 to-purple-500/5 p-6 transition-all hover:shadow-md hover:border-primary/30"
-                onClick={() => setIsEditingResume(!isEditingResume)}
-              >
-                <div className="flex items-center gap-4 relative z-10">
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-xl">📄</div>
-                  <div>
-                    <h3 className="text-base font-bold text-body">Resume / Portfolio Link</h3>
-                    <p className="text-xs text-muted font-medium mt-0.5">
-                      {profile?.resume_link ? 'Link configured' : 'Tap to add link'}
-                    </p>
-                  </div>
-                </div>
-                <div className={`w-8 h-8 rounded-full bg-white/50 flex items-center justify-center transition-transform duration-300 ${isEditingResume ? 'rotate-180' : ''}`}>
-                  ▼
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {isEditingResume && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 shadow-inner space-y-4">
-                      <p className="text-sm font-medium text-muted">Enter a public URL for your resume (PDF, Google Drive, Website)</p>
-                      <div className="flex gap-2">
-                        <input
-                          value={resumeInput}
-                          onChange={(e) => { setResumeInput(e.target.value); setResumeError(''); }}
-                          placeholder="https://..."
-                          className="flex-1 rounded-xl border border-white/20 bg-white/50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                        />
-                        <Button variant="primary" onClick={handleSaveResume} disabled={resumeLoading} className="rounded-xl px-6">
-                          {resumeLoading ? <Loader size="sm" inline /> : 'Save'}
-                        </Button>
-                      </div>
-                      {resumeError && <p className="text-xs font-bold text-danger px-1">{resumeError}</p>}
-                      {profile?.resume_link && (
-                        <a href={profile.resume_link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-primary text-sm font-bold hover:underline px-1">
-                          <span>Open Current Link</span> ↗
-                        </a>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Applications List */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold text-body px-2 tracking-tight">Active Applications</h3>
-              {applicationsLoading ? (
-                <div className="py-12"><Loader center /></div>
-              ) : myApplications.length ? (
-                <div className="grid gap-4">
-                  {myApplications.map((app) => (
-                    <div
-                      key={app.id}
-                      className="group rounded-[2rem] border border-white/20 bg-white/5 p-6 shadow-sm hover:shadow-md hover:bg-white/10 transition-all"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                          <p className="text-lg font-bold text-body">{app.job?.role_title || 'Role'}</p>
-                          <p className="text-sm font-medium text-muted">{app.job?.company_name}</p>
-                        </div>
-                        <Badge
-                          variant={app.status === 'Accepted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'neutral'}
-                          className="uppercase tracking-wider font-bold rounded-lg px-3 py-1 text-[10px]"
-                        >
-                          {app.status}
-                        </Badge>
-                      </div>
-
-                      {/* Status Message */}
-                      {(app.status === 'Accepted' || app.status === 'Rejected') && (
-                        <div className={`mt-4 rounded-xl p-4 ${app.status === 'Accepted' ? 'bg-success/5 text-success' : 'bg-danger/5 text-danger'}`}>
-                          <p className="text-sm font-semibold">
-                            {app.status === 'Accepted' ? '🎉 Offer Received!' : 'Application Update'}
-                          </p>
-                          {app.rejection_reason && <p className="text-xs opacity-90 mt-1">{app.rejection_reason}</p>}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 rounded-[2.5rem] border border-dashed border-white/20 bg-surface/30">
-                  <p className="text-muted font-medium">No active applications found.</p>
-                  <Button variant="ghost" onClick={() => navigate('/hire')} className="mt-2 text-primary hover:text-primary-dark">Find Opportunities</Button>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 'events':
-        return (
-          <div className="space-y-6">
-            <div className="px-2">
-              <h3 className="text-lg font-bold text-body tracking-tight">Event History</h3>
-            </div>
-            <div className="grid gap-4">
-              {eventsParticipated.length ? (
-                eventsParticipated.map((event) => (
-                  <div
-                    key={event.id || event.event_id || event.title}
-                    className="rounded-[2rem] border border-white/20 bg-white/5 p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <p className="text-lg font-bold text-body">{event.title || event.name}</p>
-                      <div className="flex gap-3 mt-1 text-sm text-muted">
-                        {event.role && <span>Role: <strong className="text-body">{event.role}</strong></span>}
-                        {event.stage && <span>Stage: <strong className="text-body">{event.stage}</strong></span>}
-                      </div>
-                    </div>
-                    {event.result && (
-                      <Badge variant="success" className="w-fit rounded-lg px-3 py-1.5 font-bold uppercase tracking-wide text-xs">
-                        {event.result}
+                  <h3 className="text-2xl font-bold text-body tracking-tight">{myStartup.name}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="neutral" className="bg-white/50 backdrop-blur border border-white/20">
+                      {myStartup.domain || 'Tech'}
+                    </Badge>
+                    <Badge variant="primary" className="bg-primary/10 text-primary border border-primary/20">
+                      {myStartup.stage || 'Early Stage'}
+                    </Badge>
+                    {myStartup.revenue && (
+                      <Badge variant="success" className="bg-success/10 text-success border border-success/20">
+                        Generating Revenue
                       </Badge>
                     )}
                   </div>
-                ))
-              ) : (
-                <div className="py-16 text-center rounded-[2.5rem] border border-dashed border-white/20 bg-surface/30 space-y-2">
-                  <p className="font-bold text-body">No event history</p>
-                  <p className="text-sm text-muted">Your hackathon journey begins with a single step.</p>
                 </div>
-              )}
-            </div>
-          </div>
-        );
-      case 'notifications':
-        if (notificationsLoading) {
-          return (
-            <div className="py-6">
-              <Loader label="Loading notifications" />
-            </div>
-          );
-        }
-        if (notificationsError) {
-          return (
-            <Card className="border border-danger/20 bg-danger/5 text-danger">
-              <p className="text-sm">{notificationsError}</p>
-            </Card>
-          );
-        }
-        if (!notifications.length) {
-          return (
-            <p className="text-sm text-muted">No notifications yet. When someone taps &quot;Let&apos;s Build&quot; on your posts, they&apos;ll show up here.</p>
-          );
-        }
-        return (
-          <div className="space-y-2">
-            {notifications.map((n) => (
-              <button
-                key={n.id}
-                type="button"
-                onClick={() => {
-                  // Scroll to Posts tile (Activity section) instead of navigating away
-                  if (n.post_id && activitySectionRef.current) {
-                    setActivityTab('projects');
-                    activitySectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                  if (!n.read_at) markNotificationRead(n.id).then(() => loadNotifications()).catch(() => { });
-                }}
-                className={`w-full rounded-xl border border-border/60 p-4 text-left transition hover:bg-surface/50 ${n.read_at ? 'bg-surface/30' : 'bg-primary/5 border-primary/20'}`}
-              >
-                <p className="text-sm font-medium text-body">{n.message}</p>
-                <p className="mt-1 text-xs text-muted">
-                  {n.created_at ? new Date(n.created_at).toLocaleDateString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : ''}
-                </p>
-                {n.post_id && <p className="mt-1 text-xs text-primary">View post →</p>}
-              </button>
-            ))}
-          </div>
-        );
-
-      default: // About
-        return (
-          <div className="space-y-8 animate-fade-in relative">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-xl font-bold text-body tracking-tight">Biography</h3>
-                {isEditingBio ? null : (
-                  <Button size="sm" variant="subtle" onClick={() => setIsEditingBio(true)} className="rounded-xl border border-border/50">
-                    Edit Bio
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => navigate(`/startup/${myStartup.id}`)} className="rounded-xl border border-white/10 hover:bg-white/20">
+                    View Page
                   </Button>
-                )}
+                  <Button size="sm" variant="ghost" className="rounded-xl text-danger hover:bg-danger/10 border border-danger/10" onClick={handleDeactivateStartup} disabled={startupSubmitLoading}>
+                    {startupSubmitLoading ? <Loader size="sm" inline /> : 'Deactivate'}
+                  </Button>
+                </div>
               </div>
 
-              {isEditingBio ? (
-                <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 sm:p-8 space-y-4 shadow-sm">
-                  <textarea
-                    value={bioInput}
-                    onChange={(e) => { setBioInput(e.target.value); setBioError(''); }}
-                    rows={8}
-                    className="w-full rounded-2xl border border-white/20 bg-white/50 px-6 py-5 text-base leading-relaxed outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all resize-y"
-                    placeholder="Tell your story..."
-                  />
-                  {bioError && <p className="text-sm font-bold text-danger px-2">{bioError}</p>}
-                  <div className="flex gap-3 pt-2">
-                    <Button size="lg" variant="primary" onClick={handleSaveBio} disabled={bioLoading} className="rounded-2xl px-8 shadow-md">
-                      {bioLoading ? <Loader size="sm" inline /> : 'Save Biography'}
-                    </Button>
-                    <Button size="lg" variant="ghost" onClick={handleCancelBioEdit} disabled={bioLoading} className="rounded-2xl">
-                      Cancel
-                    </Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/10">
+                <div className="space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted">Problem Solved</p>
+                  <p className="text-sm text-body leading-relaxed">{myStartup.problem}</p>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-body">
+                      {myStartup.total_members || 1}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest text-muted">Team Size</p>
+                      <p className="text-sm font-semibold text-body opacity-0">Hidden</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                      👤
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-widest text-muted">Lead</p>
+                      <p className="text-sm font-bold text-body truncate">{myStartup.head_name}</p>
+                      <p className="text-xs text-muted truncate">{myStartup.head_email}</p>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 sm:p-8 shadow-sm leading-relaxed text-body/90 text-base md:text-lg font-medium tracking-wide">
-                  {profile.bio || profile.about ? (
-                    <p className="whitespace-pre-wrap">{profile.bio || profile.about}</p>
-                  ) : (
-                    <div className="text-center py-8 opacity-60">
-                      <p>No biography added yet.</p>
-                      <p className="text-sm mt-2">A good bio introduces you to potential teammates.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Availability Toggle embedded nicely */}
-            <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-[2rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-white/20">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm">💼</div>
-                <div>
-                  <h4 className="font-bold text-body text-lg">Work Status</h4>
-                  <p className="text-sm text-muted">Let others know if you're open to collaboration</p>
-                </div>
-              </div>
-              <div className="scale-110">
-                <AvailabilityToggle
-                  isAvailable={isAvailable}
-                  onToggle={toggleAvailability}
-                  loading={availabilityLoading}
-                  disabled={!profile?.id}
-                />
               </div>
             </div>
           </div>
         );
+      }
+
+      const disableForm = startupSubmitLoading || startupStatus === 'PENDING' || startupStatus === 'APPROVED' || isReapplyLocked;
+
+      return (
+        <div className="space-y-6">
+          {startupStatus === 'REJECTED' && (
+            <div className="rounded-2xl bg-danger/5 border border-danger/10 p-4 flex gap-4 items-start">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="text-sm font-bold text-danger">Previous Application Rejected</p>
+                <p className="text-sm text-body/80 mt-1">{startupStatusMessage}</p>
+                {reapplyDate && <p className="text-xs text-muted mt-2">Reapply available after {reapplyDate.toLocaleDateString()}</p>}
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleCreateStartup} className="space-y-6">
+            <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-sm p-6 sm:p-8 space-y-6 shadow-sm">
+              <div className="flex items-center gap-4 mb-2">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                  🚀
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-body">Register Your Startup</h3>
+                  <p className="text-sm text-muted">Take the first step towards building your empire.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Venture Name</label>
+                  <input
+                    value={startupName}
+                    onChange={(e) => { setStartupName(e.target.value); setStartupSubmitError(''); }}
+                    required
+                    disabled={disableForm}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all font-medium"
+                    placeholder="Next Big Thing"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Domain / Industry</label>
+                  <input
+                    value={startupDomain}
+                    onChange={(e) => { setStartupDomain(e.target.value); setStartupSubmitError(''); }}
+                    disabled={disableForm}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
+                    placeholder="e.g. EdTech, AI, Logistics"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Problem Statement</label>
+                <textarea
+                  value={startupProblem}
+                  onChange={(e) => { setStartupProblem(e.target.value); setStartupSubmitError(''); }}
+                  rows={4}
+                  disabled={disableForm}
+                  className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all resize-none"
+                  placeholder="What burning problem are you solving? Be specific."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Current Stage</label>
+                  <div className="relative">
+                    <select
+                      value={startupStage}
+                      onChange={(e) => { setStartupStage(e.target.value); setStartupSubmitError(''); }}
+                      disabled={disableForm}
+                      className="w-full appearance-none rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+                    >
+                      <option value="IDEA">Idea Phase</option>
+                      <option value="MVP">MVP Ready</option>
+                      <option value="SCALING">Scaling Up</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted">▼</div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Team Size</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={startupTotalMembers}
+                    onChange={(e) => { setStartupTotalMembers(e.target.value); setStartupSubmitError(''); }}
+                    disabled={disableForm}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
+                    placeholder="Ex: 3"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Revenue?</label>
+                  <div className="flex gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setStartupRevenue(true)}
+                      className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${startupRevenue ? 'bg-white shadow-sm text-success' : 'text-muted hover:text-body'}`}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStartupRevenue(false)}
+                      className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all ${!startupRevenue ? 'bg-white shadow-sm text-body' : 'text-muted hover:text-body'}`}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-2">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Head Name</label>
+                  <input
+                    value={startupHeadName}
+                    onChange={(e) => { setStartupHeadName(e.target.value); setStartupSubmitError(''); }}
+                    disabled={disableForm}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Head Email</label>
+                  <input
+                    type="email"
+                    value={startupHeadEmail}
+                    onChange={(e) => { setStartupHeadEmail(e.target.value); setStartupSubmitError(''); }}
+                    disabled={disableForm}
+                    className="w-full rounded-2xl border border-white/20 bg-white/5 px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary focus:bg-white/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {startupSubmitError && (
+                <div className="p-4 bg-danger/5 border border-danger/10 rounded-xl">
+                  <p className="text-xs font-bold text-danger flex items-center gap-2">
+                    <span>⚠️</span> {startupSubmitError}
+                  </p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full py-6 rounded-2xl text-sm font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all"
+                disabled={disableForm}
+              >
+                {startupSubmitLoading ? <Loader size="sm" inline /> : 'Submit Application'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      );
     }
   };
 
@@ -1438,18 +1035,18 @@ const StudentProfile = () => {
                       </div>
                     </div>
 
-                    {/* User Info */}
-                    <div className="text-center space-y-3 sm:space-y-4">
+                    {/* User Info & Badges */}
+                    <div className="text-center space-y-4 px-4 sm:px-6">
                       <div className="space-y-1">
                         {!isEditingName ? (
                           <div className="flex items-center justify-center gap-2 group">
-                            <h1 className="text-xl sm:text-2xl font-bold text-body tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-body via-body/80 to-body/60 break-words max-w-full">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-body tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent break-words max-w-full">
                               {getDisplayName(profile)}
                             </h1>
                             <button
                               type="button"
                               onClick={() => setIsEditingName(true)}
-                              className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 rounded-full hover:bg-primary/10 transition-all duration-300"
+                              className="opacity-0 group-hover:opacity-100 p-2 rounded-full hover:bg-primary/10 transition-all duration-300"
                               aria-label="Edit name"
                             >
                               <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -1492,95 +1089,133 @@ const StudentProfile = () => {
                             </div>
                           </div>
                         )}
-                        <p className="text-sm font-medium text-muted/80">{profile.tagline || profile.headline || "Ambitious Developer"}</p>
+                        <p className="text-sm font-medium text-primary/80">{profile.tagline || profile.headline || "Ready to change the world"}</p>
                       </div>
 
                       <div className="flex flex-wrap justify-center gap-2">
-                        <Badge className="bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide">
+                        <Badge className="bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide shadow-sm">
                           LEVEL {profile.level_badge || profile.level || formatLevel(profile.level) || 'EXPLORER'}
                         </Badge>
-                        <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide">
+                        <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide shadow-sm">
                           {profile.role?.toUpperCase()}
                         </Badge>
                       </div>
 
-                      <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-2 sm:gap-4">
-                        <div className="text-center">
-                          <p className="text-lg sm:text-xl font-bold text-body">{profile.xp_points || 0}</p>
-                          <p className="text-[10px] uppercase tracking-widest text-muted font-bold whitespace-nowrap">XP POINTS</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-lg sm:text-xl font-bold text-body">{formatTrustScore(profile.trust_score)}</p>
-                          <p className="text-[10px] uppercase tracking-widest text-muted font-bold whitespace-nowrap">TRUST SCORE</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Availability & Actions */}
-                    <div className="mt-6 sm:mt-8 space-y-4">
-                      <div className="space-y-1.5 px-1 sm:px-2">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted">Availability</h3>
-                        <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/40 border border-white/50 shadow-inner backdrop-blur-sm">
-                          <AvailabilityToggle
-                            isAvailable={isAvailable}
-                            onToggle={toggleAvailability}
-                            loading={availabilityLoading}
-                            disabled={!profile?.id}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 pt-2 sm:pt-4">
-                        <Button
-                          variant="ghost"
-                          className="w-full rounded-2xl py-4 sm:py-6 border border-danger/20 text-danger hover:bg-danger/5 transition-all text-xs sm:text-sm font-bold uppercase tracking-wide"
-                          onClick={signOut}
+                      <div className="absolute top-4 left-4">
+                        <button
+                          onClick={() => navigate('/notifications')}
+                          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all shadow-lg border border-white/20"
+                          aria-label="Notifications"
                         >
-                          Sign Out
-                        </Button>
+                          <BellIcon className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
+
+                    {/* Bio Section Integrated */}
+                    <div className="relative group text-left">
+                      {isEditingBio ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={bioInput}
+                            onChange={(e) => { setBioInput(e.target.value); setBioError(''); }}
+                            rows={4}
+                            className="w-full rounded-2xl border border-white/20 bg-white/50 px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all resize-none"
+                            placeholder="Tell your story..."
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button size="xs" variant="ghost" onClick={handleCancelBioEdit}>Cancel</Button>
+                            <Button size="xs" variant="primary" onClick={handleSaveBio} disabled={bioLoading}>Save</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div onClick={() => setIsEditingBio(true)} className="cursor-pointer hover:bg-black/5 p-2 rounded-xl transition-all">
+                          <p className="text-sm text-body/90 leading-relaxed text-center">
+                            {profile.bio || profile.about || "Add a bio to introduce yourself..."}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Skills Section Integrated */}
+                    <div className="space-y-2 pt-2 border-t border-dashed border-white/20">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted">Skills</span>
+                        <button onClick={() => setIsEditingSkills(!isEditingSkills)} className="text-xs text-primary font-bold hover:underline">
+                          {isEditingSkills ? 'Done' : 'Edit'}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 justify-center">
+                        {(isEditingSkills ? skillsDraft : (profile.skills || [])).map((skill) => (
+                          <span key={skill} className="px-2 py-1 rounded-lg bg-white/50 border border-white/20 text-xs font-medium text-body shadow-sm flex items-center gap-1">
+                            {skill}
+                            {isEditingSkills && (
+                              <button onClick={() => handleRemoveSkill(skill)} className="text-danger hover:scale-110 transition-transform">×</button>
+                            )}
+                          </span>
+                        ))}
+                        {isEditingSkills && (
+                          <div className="flex items-center gap-1">
+                            <input
+                              value={skillInputValue}
+                              onChange={(e) => setSkillInputValue(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
+                              className="w-20 px-2 py-1 rounded-lg bg-white/50 border border-white/20 text-xs outline-none focus:border-primary"
+                              placeholder="Add..."
+                            />
+                          </div>
+                        )}
+                        {isEditingSkills && skillsDraft.length !== (profile.skills || []).length && (
+                          <Button size="xs" variant="primary" onClick={handleSaveSkills} disabled={skillsLoading} className="scale-75 origin-left">
+                            Save
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Academic Info Integrated */}
+                    {profile.college && (
+                      <div className="pt-2 border-t border-dashed border-white/20 space-y-2 text-left">
+                        <p className="text-xs font-bold uppercase tracking-widest text-muted text-center">Academic</p>
+                        <div className="text-sm text-body text-center space-y-0.5">
+                          <p className="font-bold">{profile.college}</p>
+                          <p className="text-muted text-xs">{profile.course} • {profile.year}</p>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Availability & Actions */}
+                  <div className="mt-6 space-y-4 px-4 sm:px-6 pb-6">
+                    <div className="p-3 rounded-2xl bg-white/40 border border-white/50 shadow-inner backdrop-blur-sm flex items-center justify-between">
+                      <span className="text-xs font-bold text-body">Available to Work</span>
+                      <AvailabilityToggle
+                        isAvailable={isAvailable}
+                        onToggle={toggleAvailability}
+                        loading={availabilityLoading}
+                        disabled={!profile?.id}
+                      />
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      className="w-full rounded-xl py-3 border border-danger/10 text-danger hover:bg-danger/5 transition-all text-xs font-bold uppercase tracking-wide"
+                      onClick={signOut}
+                    >
+                      Sign Out
+                    </Button>
                   </div>
                 </Card>
-
-                {/* Academic Info Card */}
-                {profile.college && (
-                  <Card className="mt-4 sm:mt-6 p-4 sm:p-6 backdrop-blur-xl shadow-xl rounded-[1.5rem] sm:rounded-[2rem] space-y-3 sm:space-y-4">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-muted px-2">Academic Profile</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/30 border border-white/40">
-                        <span className="text-xl">🏛️</span>
-                        <div className="space-y-0.5 min-w-0">
-                          <p className="text-xs font-bold text-muted uppercase tracking-tighter">Institution</p>
-                          <p className="text-sm font-semibold text-body leading-tight break-words">{profile.college}</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                        <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/30 border border-white/40">
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="text-xs font-bold text-muted uppercase tracking-tighter">Course</p>
-                            <p className="text-sm font-semibold text-body leading-tight break-words">{profile.course}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/30 border border-white/40">
-                          <div className="space-y-0.5 min-w-0">
-                            <p className="text-xs font-bold text-muted uppercase tracking-tighter">Year</p>
-                            <p className="text-sm font-semibold text-body leading-tight">{profile.year}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                )}
               </motion.div>
 
-            </div >
-          </aside >
+            </div>
+          </aside>
 
           {/* Main Content - Right Column */}
-          < main className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0" >
+          <main className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0">
             {/* Tabs Section */}
-            < motion.div
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -1626,46 +1261,59 @@ const StudentProfile = () => {
                   </AnimatePresence>
                 </div>
               </Card>
-            </motion.div >
+            </motion.div>
 
             {/* Activity Section */}
-            < motion.div
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Card ref={activitySectionRef} className="backdrop-blur-md shadow-xl rounded-[2rem] p-4 sm:p-6 lg:p-10 space-y-6">
+              <Card ref={activitySectionRef} className="backdrop-blur-md shadow-xl rounded-[2rem] p-4 sm:p-6 lg:p-10 space-y-6 w-full overflow-hidden">
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <h2 className="text-2xl font-bold text-body tracking-tight">Your Activity</h2>
                     <p className="text-sm text-muted">Showcase your progress and contributions</p>
                   </div>
 
-                  <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-body/5 w-fit">
-                    <button
-                      type="button"
-                      onClick={() => setActivityTab('projects')}
-                      className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${activityTab === 'projects'
-                        ? 'bg-white text-primary shadow-md scale-105'
-                        : 'text-muted hover:text-body'
-                        }`}
-                    >
-                      Projects
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActivityTab('updates')}
-                      className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${activityTab === 'updates'
-                        ? 'bg-white text-primary shadow-md scale-105'
-                        : 'text-muted hover:text-body'
-                        }`}
-                    >
-                      Updates
-                    </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-body/5">
+                      <button
+                        type="button"
+                        onClick={() => setActivityTab('projects')}
+                        className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${activityTab === 'projects'
+                          ? 'bg-white text-primary shadow-md scale-105'
+                          : 'text-muted hover:text-body'
+                          }`}
+                      >
+                        Projects
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivityTab('updates')}
+                        className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${activityTab === 'updates'
+                          ? 'bg-white text-primary shadow-md scale-105'
+                          : 'text-muted hover:text-body'
+                          }`}
+                      >
+                        Updates
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActivityTab('applied')}
+                        className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${activityTab === 'applied'
+                          ? 'bg-white text-primary shadow-md scale-105'
+                          : 'text-muted hover:text-body'
+                          }`}
+                      >
+                        Applied
+                      </button>
+                    </div>
+
                     {role === 'student' && (
                       <button
                         onClick={() => setShowForm(true)}
-                        className="ml-2 flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/25 hover:scale-105 transition active:scale-95"
+                        className="flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/25 hover:scale-105 transition active:scale-95 whitespace-nowrap"
                       >
                         <PlusIcon className="w-3.5 h-3.5" />
                         Create
@@ -1674,7 +1322,7 @@ const StudentProfile = () => {
                   </div>
                 </div>
 
-                <div className="relative">
+                <div className="relative w-full overflow-hidden">
                   {activityLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                       <Loader />
@@ -1685,12 +1333,12 @@ const StudentProfile = () => {
                       <p className="text-sm font-semibold text-danger">{activityError}</p>
                     </div>
                   ) : (
-                    <div className="grid gap-6">
-                      {activityTab === 'projects' ? (
+                    <div className="grid gap-6 w-full overflow-hidden">
+                      {activityTab === 'projects' && (
                         projectsPosted.length > 0 ? (
-                          <div className="grid gap-6 sm:grid-cols-2">
+                          <div className="grid gap-6 sm:grid-cols-2 w-full overflow-hidden">
                             {projectsPosted.map((post) => (
-                              <div key={post.id} className="transition-transform duration-300 hover:-translate-y-1">
+                              <div key={post.id} className="transition-transform duration-300 hover:-translate-y-1 min-w-0 w-full overflow-hidden">
                                 <PostCard
                                   post={post}
                                   onPostDeleted={(deletedId) => {
@@ -1706,9 +1354,11 @@ const StudentProfile = () => {
                             <p className="text-sm font-bold text-muted tracking-tight">Zero projects found. Time to build something!</p>
                           </div>
                         )
-                      ) : (
+                      )}
+
+                      {activityTab === 'updates' && (
                         updatesPosted.length > 0 ? (
-                          <div className="space-y-6">
+                          <div className="space-y-6 w-full overflow-hidden">
                             {updatesPosted.map((post) => (
                               <PostCard
                                 key={post.id}
@@ -1726,19 +1376,97 @@ const StudentProfile = () => {
                           </div>
                         )
                       )}
+
+                      {activityTab === 'applied' && (
+                        <div className="space-y-4 w-full overflow-hidden">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-body px-2 tracking-tight">Active Applications</h3>
+                            <div
+                              className="cursor-pointer text-xs font-bold text-primary flex items-center gap-1"
+                              onClick={() => setIsEditingResume(!isEditingResume)}
+                            >
+                              {profile?.resume_link ? 'Update Resume' : 'Add Resume'}
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {isEditingResume && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 shadow-inner space-y-4 mb-4">
+                                  <div className="flex gap-2">
+                                    <input
+                                      value={resumeInput}
+                                      onChange={(e) => { setResumeInput(e.target.value); setResumeError(''); }}
+                                      placeholder="https://..."
+                                      className="flex-1 rounded-xl border border-white/20 bg-white/50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                                    />
+                                    <Button variant="primary" onClick={handleSaveResume} disabled={resumeLoading} className="rounded-xl px-6">
+                                      {resumeLoading ? <Loader size="sm" inline /> : 'Save'}
+                                    </Button>
+                                  </div>
+                                  {resumeError && <p className="text-xs font-bold text-danger px-1">{resumeError}</p>}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
+                          {applicationsLoading ? (
+                            <div className="py-12"><Loader center /></div>
+                          ) : appliedJobs.length ? (
+                            <div className="grid gap-4 w-full overflow-hidden">
+                              {appliedJobs.map((app) => (
+                                <div
+                                  key={app.id}
+                                  className="group rounded-[2rem] border border-white/20 bg-white/5 p-6 shadow-sm hover:shadow-md hover:bg-white/10 transition-all"
+                                >
+                                  <div className="flex justify-between items-start gap-4">
+                                    <div>
+                                      <p className="text-lg font-bold text-body">{app.job?.role_title || 'Role'}</p>
+                                      <p className="text-sm font-medium text-muted">{app.job?.company_name}</p>
+                                    </div>
+                                    <Badge
+                                      variant={app.status === 'Accepted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'neutral'}
+                                      className="uppercase tracking-wider font-bold rounded-lg px-3 py-1 text-[10px]"
+                                    >
+                                      {app.status}
+                                    </Badge>
+                                  </div>
+
+                                  {(app.status === 'Accepted' || app.status === 'Rejected') && (
+                                    <div className={`mt-4 rounded-xl p-4 ${app.status === 'Accepted' ? 'bg-success/5 text-success' : 'bg-danger/5 text-danger'}`}>
+                                      <p className="text-sm font-semibold">
+                                        {app.status === 'Accepted' ? '🎉 Offer Received!' : 'Application Update'}
+                                      </p>
+                                      {app.rejection_reason && <p className="text-xs opacity-90 mt-1">{app.rejection_reason}</p>}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-16 rounded-[2.5rem] border border-dashed border-white/20 bg-surface/30">
+                              <p className="text-muted font-medium">No active applications found.</p>
+                              <Button variant="ghost" onClick={() => navigate('/hire')} className="mt-2 text-primary hover:text-primary-dark">Find Opportunities</Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </Card>
-            </motion.div >
-          </main >
-        </div >
-      </div >
+            </motion.div>
+          </main>
+        </div>
+      </div>
 
       {/* Modals & Overlays */}
-      < AnimatePresence >
-
-
+      <AnimatePresence>
         {showForm && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-md px-4" onClick={() => setShowForm(false)}>
             <motion.div
@@ -1842,8 +1570,8 @@ const StudentProfile = () => {
             </motion.div>
           </div>
         )}
-      </AnimatePresence >
-    </div >
+      </AnimatePresence>
+    </div>
   );
 };
 
