@@ -40,19 +40,19 @@ export const useOnlineStatus = (userId) => {
     }
 
     // Set as online immediately
-    setOnlineStatus(true);
+    setOnlineStatus(true).catch((err) => console.error('Initial online status update failed:', err));
 
     // Set up heartbeat to keep user marked as online
     const interval = setInterval(() => {
-      setOnlineStatus(true);
+      setOnlineStatus(true).catch((err) => console.error('Heartbeat online status update failed:', err));
     }, 30000); // Every 30 seconds
 
     // Handle page visibility changes
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setOnlineStatus(false);
+        setOnlineStatus(false).catch((err) => console.error('Visibility hidden status update failed:', err));
       } else {
-        setOnlineStatus(true);
+        setOnlineStatus(true).catch((err) => console.error('Visibility shown status update failed:', err));
       }
     };
 
@@ -60,7 +60,7 @@ export const useOnlineStatus = (userId) => {
 
     // Handle page unload
     const handleBeforeUnload = () => {
-      setOnlineStatus(false);
+      setOnlineStatus(false).catch((err) => console.error('Before unload status update failed:', err));
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -69,7 +69,7 @@ export const useOnlineStatus = (userId) => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      setOnlineStatus(false);
+      setOnlineStatus(false).catch((err) => console.error('Cleanup online status update failed:', err));
     };
   }, [userId, setOnlineStatus]);
 
@@ -90,7 +90,7 @@ export const useAvailability = (userId, initialAvailability = false) => {
     setLoading(true);
     try {
       const newAvailability = !isAvailable;
-      
+
       const { error } = await supabase
         .from('users')
         .update({ available_to_work: newAvailability })
@@ -133,7 +133,7 @@ export const useAvailability = (userId, initialAvailability = false) => {
       }
     };
 
-    loadAvailability();
+    loadAvailability().catch((err) => console.error('Initial availability load failed:', err));
   }, [userId]);
 
   return {

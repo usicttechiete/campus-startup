@@ -13,20 +13,30 @@ export const AuthProvider = ({ children }) => {
     let ignore = false;
 
     const initialise = async () => {
-      setAuthLoading(true);
-      const {
-        data: { session: activeSession },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+      try {
+        setAuthLoading(true);
+        const {
+          data: { session: activeSession },
+          error: sessionError,
+        } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        setAuthError(sessionError.message);
-      }
+        if (sessionError) {
+          setAuthError(sessionError.message);
+        }
 
-      if (!ignore) {
-        setSession(activeSession);
-        setUser(activeSession?.user ?? null);
-        setAuthLoading(false);
+        if (!ignore) {
+          setSession(activeSession);
+          setUser(activeSession?.user ?? null);
+        }
+      } catch (err) {
+        console.error('AuthContext: Initialisation failed', err);
+        if (!ignore) {
+          setAuthError(err.message || 'Authentication initialisation failed');
+        }
+      } finally {
+        if (!ignore) {
+          setAuthLoading(false);
+        }
       }
     };
 
@@ -59,8 +69,8 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password, additionalData = {}) => {
     setAuthError(null);
-    const { error } = await supabase.auth.signUp({ 
-      email, 
+    const { error } = await supabase.auth.signUp({
+      email,
       password,
       options: {
         data: additionalData

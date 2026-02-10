@@ -162,10 +162,18 @@ const StudentProfile = () => {
   // Ref for scrolling to activity section when notification is clicked
   const activitySectionRef = useRef(null);
 
+  const [nameInput, setNameInput] = useState('');
   const [taglineInput, setTaglineInput] = useState('');
+  const [bioInput, setBioInput] = useState('');
+  const [skillsDraft, setSkillsDraft] = useState([]);
+  const [skillInputValue, setSkillInputValue] = useState('');
+  const [skillsError, setSkillsError] = useState('');
   const [collegeInput, setCollegeInput] = useState('');
   const [courseInput, setCourseInput] = useState('');
   const [yearInput, setYearInput] = useState('');
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bioError, setBioError] = useState('');
+  const [bioLoading, setBioLoading] = useState(false);
 
   // Theme State
   const [theme, setTheme] = useState(() => {
