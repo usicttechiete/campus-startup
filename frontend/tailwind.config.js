@@ -15,9 +15,15 @@ export default {
           card: 'var(--color-bg-card)',
           subtle: 'var(--color-bg-subtle)',
         },
-        // Primary
+        // Primary - LinkedIn Blue with full scale
         primary: {
           DEFAULT: 'var(--color-primary)',
+          900: 'var(--color-primary-900)',
+          700: 'var(--color-primary-700)',
+          500: 'var(--color-primary-500)',
+          300: 'var(--color-primary-300)',
+          100: 'var(--color-primary-100)',
+          50: 'var(--color-primary-50)',
           hover: 'var(--color-primary-hover)',
           soft: 'var(--color-primary-soft)',
         },
@@ -31,18 +37,26 @@ export default {
           DEFAULT: 'var(--color-accent)',
           soft: 'var(--color-accent-soft)',
         },
-        // Semantic
+        // Semantic Colors with variants
         success: {
           DEFAULT: 'var(--color-success)',
           soft: 'var(--color-success-soft)',
+          100: 'var(--color-success-100)',
         },
         warning: {
           DEFAULT: 'var(--color-warning)',
           soft: 'var(--color-warning-soft)',
+          100: 'var(--color-warning-100)',
         },
         danger: {
           DEFAULT: 'var(--color-danger)',
           soft: 'var(--color-danger-soft)',
+          100: 'var(--color-danger-100)',
+        },
+        info: {
+          DEFAULT: 'var(--color-info)',
+          soft: 'var(--color-info-soft)',
+          100: 'var(--color-info-100)',
         },
         // Text
         text: {
@@ -50,12 +64,13 @@ export default {
           secondary: 'var(--color-text-secondary)',
           muted: 'var(--color-text-muted)',
           inverted: 'var(--color-text-inverted)',
-          disabled: '#94a3b8', // Keep literal for disabled
+          disabled: 'var(--color-text-disabled)',
         },
         // Borders
         border: {
           DEFAULT: 'var(--color-border)',
           hover: 'var(--color-border-hover)',
+          strong: 'var(--color-border-strong)',
         },
         divider: 'var(--color-divider)',
       },

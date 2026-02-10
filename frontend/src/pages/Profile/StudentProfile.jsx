@@ -5,6 +5,8 @@ import Card from '../../components/Card/Card.jsx';
 import Badge from '../../components/Badge/Badge.jsx';
 import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
+import Avatar from '../../components/Avatar/Avatar.jsx';
+import ProfileSection from '../../components/ProfileSection/ProfileSection.jsx';
 import OnlineStatusDot from '../../components/OnlineStatusDot/OnlineStatusDot.jsx';
 import AvailabilityToggle from '../../components/AvailabilityToggle/AvailabilityToggle.jsx';
 import DebugOnlineStatus from '../../components/DebugOnlineStatus/DebugOnlineStatus.jsx';
@@ -20,6 +22,7 @@ import { getMyNotifications, markNotificationRead } from '../../services/notific
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
+  { key: 'profile', label: 'Profile' },
   { key: 'startup', label: 'My Startup' },
 ];
 
@@ -70,6 +73,13 @@ const BellIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+  </svg>
+);
+
+const EditIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
   </svg>
 );
 
@@ -146,26 +156,16 @@ const StudentProfile = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('startup');
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Ref for scrolling to activity section when notification is clicked
   const activitySectionRef = useRef(null);
 
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState('');
-  const [nameError, setNameError] = useState('');
-  const [nameLoading, setNameLoading] = useState(false);
-
-  const [isEditingSkills, setIsEditingSkills] = useState(false);
-  const [skillsDraft, setSkillsDraft] = useState([]);
-  const [skillInputValue, setSkillInputValue] = useState('');
-  const [skillsError, setSkillsError] = useState('');
-  const [skillsLoading, setSkillsLoading] = useState(false);
-
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioInput, setBioInput] = useState('');
-  const [bioError, setBioError] = useState('');
-  const [bioLoading, setBioLoading] = useState(false);
+  const [taglineInput, setTaglineInput] = useState('');
+  const [collegeInput, setCollegeInput] = useState('');
+  const [courseInput, setCourseInput] = useState('');
+  const [yearInput, setYearInput] = useState('');
 
   // Theme State
   const [theme, setTheme] = useState(() => {
@@ -328,9 +328,8 @@ const StudentProfile = () => {
   }, [profile?.resume_link]);
 
   const tabsToRender = useMemo(() => {
-    // Only showing startup tab for now as per new design
     return tabConfig;
-  }, [role]);
+  }, []);
 
   // Notifications section state
   const [notifications, setNotifications] = useState([]);
@@ -358,10 +357,8 @@ const StudentProfile = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'notifications') {
-      loadNotifications();
-    }
-  }, [activeTab, loadNotifications]);
+    loadNotifications();
+  }, [loadNotifications]);
 
   useEffect(() => {
     if (role !== 'student' && activeTab === 'startup') {
@@ -438,56 +435,38 @@ const StudentProfile = () => {
   }, [profile?.id]);
 
   useEffect(() => {
-    if (profile?.name) {
-      setNameInput(profile.name);
-    }
     if (profile) {
-      const nextSkills = Array.isArray(profile.skills) ? profile.skills : [];
-      setSkillsDraft(nextSkills);
+      setNameInput(profile.name || '');
+      setTaglineInput(profile.tagline || profile.headline || '');
       setBioInput(profile.bio || profile.about || '');
+      setSkillsDraft(Array.isArray(profile.skills) ? profile.skills : []);
+      setCollegeInput(profile.college || '');
+      setCourseInput(profile.course || '');
+      setYearInput(profile.year || '');
     }
   }, [profile]);
 
-  const handleSaveName = async () => {
-    const trimmed = nameInput.trim();
-
-    if (trimmed.length < 3) {
-      setNameError('Name must be at least 3 characters');
-      return;
-    }
-
-    if (trimmed.length > 60) {
-      setNameError('Name is too long');
-      return;
-    }
-
+  const handleSaveProfile = async () => {
     try {
-      setNameLoading(true);
-      setNameError('');
-      const updatedProfile = await updateProfile({ name: trimmed });
+      setLoading(true);
+      const payload = {
+        name: nameInput.trim(),
+        tagline: taglineInput.trim(),
+        bio: bioInput.trim(),
+        skills: normalizeSkills(skillsDraft),
+        college: collegeInput.trim(),
+        course: courseInput.trim(),
+        year: yearInput.trim(),
+      };
+      const updatedProfile = await updateProfile(payload);
       setProfile(updatedProfile);
-      setIsEditingName(false);
-    } catch (error) {
-      setNameError('Failed to update name. Please try again.');
-      // eslint-disable-next-line no-console
-      console.error('Error updating name:', error);
+      setIsEditingProfile(false);
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
     } finally {
-      setNameLoading(false);
+      setLoading(false);
     }
   };
-
-  const teamsJoined = useMemo(() => {
-    if (!profile) return [];
-    if (Array.isArray(profile.teams_joined)) return profile.teams_joined;
-    return [];
-  }, [profile]);
-
-  const eventsParticipated = useMemo(() => {
-    if (!profile) return [];
-    if (Array.isArray(profile.events_participated)) return profile.events_participated;
-    if (Array.isArray(profile.events_attended_list)) return profile.events_attended_list;
-    return [];
-  }, [profile]);
 
   const { projectsPosted, updatesPosted, appliedJobs } = useMemo(() => {
     const projects = [];
@@ -525,63 +504,16 @@ const StudentProfile = () => {
     setSkillsDraft((prev) => prev.filter((skill) => skill !== skillToRemove));
   };
 
-  const handleSaveSkills = async () => {
-    const normalizedSkills = normalizeSkills(skillsDraft);
-    const previousSkills = Array.isArray(profile?.skills) ? profile.skills : [];
-
-    if (skillsFingerprint(normalizedSkills) === skillsFingerprint(previousSkills)) {
-      setSkillsError('No changes to save');
-      return;
-    }
-
-    setSkillsLoading(true);
-    setSkillsError('');
-    try {
-      const updatedProfile = await updateProfile({ skills: normalizedSkills });
-      setProfile(updatedProfile);
-      setIsEditingSkills(false);
-      const nextSkills = Array.isArray(updatedProfile?.skills) ? updatedProfile.skills : normalizedSkills;
-      setSkillsDraft(nextSkills);
-      setSkillInputValue('');
-    } catch (err) {
-      setSkillsError(err.message || 'Failed to update skills. Please try again.');
-    } finally {
-      setSkillsLoading(false);
-    }
-  };
-
-  const handleCancelSkillsEdit = () => {
-    setIsEditingSkills(false);
-    const resetSkills = Array.isArray(profile?.skills) ? profile.skills : [];
-    setSkillsDraft(resetSkills);
-    setSkillInputValue('');
-    setSkillsError('');
-  };
-
-  const handleSaveBio = async () => {
-    const trimmed = bioInput.trim();
-    const currentBio = profile?.bio || profile?.about || '';
-
-    if (trimmed === currentBio) {
-      setBioError('No changes to save');
-      return;
-    }
-
-    if (trimmed.length > 600) {
-      setBioError('Bio is too long (max 600 characters)');
-      return;
-    }
-    setBioLoading(true);
-    setBioError('');
-    try {
-      const updatedProfile = await updateProfile({ bio: trimmed });
-      setProfile(updatedProfile);
-      setIsEditingBio(false);
-      setBioInput(updatedProfile?.bio || updatedProfile?.about || trimmed);
-    } catch (err) {
-      setBioError(err.message || 'Failed to update about section. Please try again.');
-    } finally {
-      setBioLoading(false);
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false);
+    if (profile) {
+      setNameInput(profile.name || '');
+      setTaglineInput(profile.tagline || profile.headline || '');
+      setBioInput(profile.bio || profile.about || '');
+      setSkillsDraft(Array.isArray(profile.skills) ? profile.skills : []);
+      setCollegeInput(profile.college || '');
+      setCourseInput(profile.course || '');
+      setYearInput(profile.year || '');
     }
   };
 
@@ -654,6 +586,131 @@ const StudentProfile = () => {
 
   const renderTabContent = () => {
     if (!profile) return null;
+
+    if (activeTab === 'profile') {
+      return (
+        <div className="space-y-8">
+          {/* Bio & Professional Info */}
+          <div className="space-y-6">
+            {isEditingProfile ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Full Name</label>
+                  <input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Tagline</label>
+                  <input
+                    value={taglineInput}
+                    onChange={(e) => setTaglineInput(e.target.value)}
+                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Bio</label>
+                  <textarea
+                    value={bioInput}
+                    onChange={(e) => setBioInput(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+                    placeholder="Tell your story..."
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-body/90 leading-relaxed font-medium">
+                  {profile.bio || profile.about || "Sharing my journey in the startup ecosystem."}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Skills & Academic Info Card */}
+          <div className="rounded-[2rem] bg-body/5 border border-body/10 p-6 sm:p-8 space-y-8">
+            {/* Skills */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-body/40">Technical Arsenal</h3>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {isEditingProfile ? (
+                  <div className="w-full space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {skillsDraft.map((skill) => (
+                        <Badge key={skill} className="bg-primary/10 text-primary border-primary/20 px-3 py-1.5 flex items-center gap-2">
+                          {skill}
+                          <button onClick={() => handleRemoveSkill(skill)} className="hover:text-danger hover:scale-125 transition-all">×</button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        value={skillInputValue}
+                        onChange={(e) => setSkillInputValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                        placeholder="Add skill (e.g. React)"
+                        className="flex-1 rounded-xl bg-white border border-primary/20 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <Button size="sm" variant="ghost" onClick={handleAddSkill}>Add</Button>
+                    </div>
+                  </div>
+                ) : (
+                  skillsDraft.length > 0 ? (
+                    skillsDraft.map((skill) => (
+                      <Badge key={skill} className="bg-white dark:bg-slate-800 text-body font-bold border-body/10 px-4 py-1.5 shadow-sm">
+                        {skill}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted italic">No skills listed yet.</p>
+                  )
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-body/10 pt-8 flex flex-col sm:flex-row gap-6 sm:items-center">
+              <div className="flex-1 space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-body/40">Academic Roots</h3>
+                {isEditingProfile ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input value={collegeInput} onChange={(e) => setCollegeInput(e.target.value)} placeholder="College" className="rounded-xl border border-primary/20 px-4 py-2 text-sm" />
+                    <input value={courseInput} onChange={(e) => setCourseInput(e.target.value)} placeholder="Course" className="rounded-xl border border-primary/20 px-4 py-2 text-sm" />
+                    <input value={yearInput} onChange={(e) => setYearInput(e.target.value)} placeholder="Year" className="rounded-xl border border-primary/20 px-4 py-2 text-sm" />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="font-bold text-body">{profile.college || 'College Name'}</p>
+                    <p className="text-sm text-muted font-medium">{profile.course || 'Course'} • {profile.year || 'Year'}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Consolidated Edit Button */}
+          <div className="flex justify-end pt-4">
+            {isEditingProfile ? (
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={handleCancelEdit} disabled={loading}>Cancel</Button>
+                <Button variant="primary" onClick={handleSaveProfile} disabled={loading}>
+                  {loading ? <Loader size="sm" inline /> : 'Save Changes'}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="ghost" className="rounded-xl border border-body/10 font-bold text-xs uppercase tracking-widest px-6" onClick={() => setIsEditingProfile(true)}>
+                Edit Profile
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     if (activeTab === 'startup') {
       // Startup Logic (Register or View)
@@ -730,11 +787,19 @@ const StudentProfile = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => navigate(`/startup/${myStartup.id}`)} className="rounded-xl border border-white/10 hover:bg-white/20">
-                    View Page
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={() => navigate('/hire', { state: { startupId: myStartup.id } })}
+                    className="rounded-xl px-4 font-bold text-[11px] shadow-md shadow-primary/20"
+                  >
+                    Add Job Role
                   </Button>
-                  <Button size="sm" variant="ghost" className="rounded-xl text-danger hover:bg-danger/10 border border-danger/10" onClick={handleDeactivateStartup} disabled={startupSubmitLoading}>
+                  <Button size="sm" variant="ghost" onClick={() => navigate(`/startup/${myStartup.id}`)} className="rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 text-[11px] font-bold">
+                    View Startup
+                  </Button>
+                  <Button size="sm" variant="ghost" className="rounded-xl text-danger hover:bg-danger/5 border border-danger/10 text-[11px] font-bold" onClick={handleDeactivateStartup} disabled={startupSubmitLoading}>
                     {startupSubmitLoading ? <Loader size="sm" inline /> : 'Deactivate'}
                   </Button>
                 </div>
@@ -928,6 +993,8 @@ const StudentProfile = () => {
         </div>
       );
     }
+
+    return null;
   };
 
 
@@ -1007,208 +1074,90 @@ const StudentProfile = () => {
                 <Card className="overflow-hidden backdrop-blur-xl shadow-2xl rounded-[1.5rem] sm:rounded-[2rem]">
                   {/* Profile Header Background */}
                   <div className="relative h-24 sm:h-32 bg-gradient-to-r from-primary/40 via-primary/20 to-accent/40">
-                    <button
-                      onClick={toggleTheme}
-                      className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all shadow-lg border border-white/20"
-                      aria-label="Toggle Dark Mode"
-                    >
-                      {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
-                    </button>
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex gap-2">
+                      <button
+                        onClick={() => navigate('/notifications')}
+                        className="p-2 rounded-full bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-white backdrop-blur-md transition-all shadow-lg border border-gray-200 dark:border-white/20"
+                        aria-label="Notifications"
+                      >
+                        <BellIcon className="w-5 h-5" />
+                        {notifications.filter(n => !n.is_read).length > 0 && (
+                          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white shadow-lg border-2 border-white dark:border-slate-800">
+                            {notifications.filter(n => !n.is_read).length}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        onClick={toggleTheme}
+                        className="p-2 rounded-full bg-white dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-white backdrop-blur-md transition-all shadow-lg border border-gray-200 dark:border-white/20"
+                        aria-label="Toggle Dark Mode"
+                      >
+                        {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="relative px-4 pb-6 sm:px-6 sm:pb-8">
-                    {/* Avatar */}
+                    {/* Avatar - Using our new component with Campus Startup style */}
                     <div className="-mt-12 sm:-mt-16 mb-3 sm:mb-4 flex justify-center">
                       <div className="relative group">
-                        <div className="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white/50 bg-white dark:bg-slate-800 shadow-xl overflow-hidden backdrop-blur-md">
-                          {profile.avatar_url ? (
-                            <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary via-primary-dark to-accent text-3xl sm:text-4xl font-bold text-white uppercase">
-                              {getDisplayName(profile)[0]}
-                            </div>
-                          )}
-                        </div>
+                        <Avatar
+                          src={profile.avatar_url}
+                          alt={getDisplayName(profile)}
+                          size="2xl"
+                          className="border-4 border-white/50 shadow-xl ring-4 ring-white/20"
+                        />
                         <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 ring-3 sm:ring-4 ring-white/50 rounded-full">
                           <OnlineStatusDot isOnline={isOnline} size="large" />
                         </div>
+                        {isAvailable && (
+                          <div className="absolute -top-1 -right-1 bg-success text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border-2 border-white animate-pulse">
+                            ACTIVE
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* User Info & Badges */}
                     <div className="text-center space-y-4 px-4 sm:px-6">
                       <div className="space-y-1">
-                        {!isEditingName ? (
-                          <div className="flex items-center justify-center gap-2 group">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-body tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent break-words max-w-full">
-                              {getDisplayName(profile)}
-                            </h1>
-                            <button
-                              type="button"
-                              onClick={() => setIsEditingName(true)}
-                              className="opacity-0 group-hover:opacity-100 p-2 rounded-full hover:bg-primary/10 transition-all duration-300"
-                              aria-label="Edit name"
-                            >
-                              <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="mt-2 space-y-3 px-2 sm:px-4">
-                            <input
-                              value={nameInput}
-                              onChange={(event) => {
-                                const value = event.target.value;
-                                if (!/^[A-Za-z ]*$/.test(value)) return;
-                                setNameInput(value);
-                                setNameError('');
-                              }}
-                              className="w-full rounded-2xl border border-primary/30 bg-white/50 px-4 py-2 text-center text-lg font-semibold outline-none focus:ring-2 focus:ring-primary backdrop-blur-sm"
-                              autoFocus
-                            />
-                            {nameError && <p className="text-xs text-danger font-medium">{nameError}</p>}
-                            <div className="flex gap-2 justify-center">
-                              <Button size="xs" variant="primary" onClick={handleSaveName} disabled={nameLoading} className="rounded-full px-6">
-                                {nameLoading ? <Loader size="sm" inline /> : 'Save'}
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="ghost"
-                                className="rounded-full px-6 border border-border/60"
-                                onClick={() => {
-                                  setIsEditingName(false);
-                                  setNameInput(profile.name);
-                                  setNameError('');
-                                }}
-                                disabled={nameLoading}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                        <p className="text-sm font-medium text-primary/80">{profile.tagline || profile.headline || "Ready to change the world"}</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight break-words max-w-full">
+                          {getDisplayName(profile)}
+                        </h1>
+                        <p className="text-sm font-semibold text-primary dark:text-primary-light uppercase tracking-wider">
+                          {profile.tagline || profile.headline || "Explorer"}
+                        </p>
                       </div>
 
                       <div className="flex flex-wrap justify-center gap-2">
-                        <Badge className="bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide shadow-sm">
-                          LEVEL {profile.level_badge || profile.level || formatLevel(profile.level) || 'EXPLORER'}
+                        <Badge className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 rounded-full px-3 py-1 font-bold text-[10px] tracking-widest shadow-sm">
+                          LVL {profile.level_badge || profile.level || formatLevel(profile.level) || '1'}
                         </Badge>
-                        <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-4 py-1 font-semibold text-xs tracking-wide shadow-sm">
+                        <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-3 py-1 font-bold text-[10px] tracking-widest shadow-sm">
                           {profile.role?.toUpperCase()}
                         </Badge>
-                      </div>
-
-                      <div className="absolute top-4 left-4">
-                        <button
-                          onClick={() => navigate('/notifications')}
-                          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-md transition-all shadow-lg border border-white/20"
-                          aria-label="Notifications"
-                        >
-                          <BellIcon className="w-5 h-5" />
-                        </button>
+                        {isAvailable && (
+                          <Badge variant="success" className="px-2 py-0.5 text-[8px] animate-pulse">AVAILABLE</Badge>
+                        )}
                       </div>
                     </div>
 
-                    {/* Bio Section Integrated */}
-                    <div className="relative group text-left">
-                      {isEditingBio ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={bioInput}
-                            onChange={(e) => { setBioInput(e.target.value); setBioError(''); }}
-                            rows={4}
-                            className="w-full rounded-2xl border border-white/20 bg-white/50 px-4 py-3 text-sm leading-relaxed outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all resize-none"
-                            placeholder="Tell your story..."
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button size="xs" variant="ghost" onClick={handleCancelBioEdit}>Cancel</Button>
-                            <Button size="xs" variant="primary" onClick={handleSaveBio} disabled={bioLoading}>Save</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div onClick={() => setIsEditingBio(true)} className="cursor-pointer hover:bg-black/5 p-2 rounded-xl transition-all">
-                          <p className="text-sm text-body/90 leading-relaxed text-center">
-                            {profile.bio || profile.about || "Add a bio to introduce yourself..."}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Skills Section Integrated */}
-                    <div className="space-y-2 pt-2 border-t border-dashed border-white/20">
+                    {/* Availability Toggle - Subtle */}
+                    <div className="mt-8 px-6 pt-4 border-t border-body/5">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold uppercase tracking-widest text-muted">Skills</span>
-                        <button onClick={() => setIsEditingSkills(!isEditingSkills)} className="text-xs text-primary font-bold hover:underline">
-                          {isEditingSkills ? 'Done' : 'Edit'}
-                        </button>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 justify-center">
-                        {(isEditingSkills ? skillsDraft : (profile.skills || [])).map((skill) => (
-                          <span key={skill} className="px-2 py-1 rounded-lg bg-white/50 border border-white/20 text-xs font-medium text-body shadow-sm flex items-center gap-1">
-                            {skill}
-                            {isEditingSkills && (
-                              <button onClick={() => handleRemoveSkill(skill)} className="text-danger hover:scale-110 transition-transform">×</button>
-                            )}
-                          </span>
-                        ))}
-                        {isEditingSkills && (
-                          <div className="flex items-center gap-1">
-                            <input
-                              value={skillInputValue}
-                              onChange={(e) => setSkillInputValue(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
-                              className="w-20 px-2 py-1 rounded-lg bg-white/50 border border-white/20 text-xs outline-none focus:border-primary"
-                              placeholder="Add..."
-                            />
-                          </div>
-                        )}
-                        {isEditingSkills && skillsDraft.length !== (profile.skills || []).length && (
-                          <Button size="xs" variant="primary" onClick={handleSaveSkills} disabled={skillsLoading} className="scale-75 origin-left">
-                            Save
-                          </Button>
-                        )}
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">Availability Status</span>
+                        <AvailabilityToggle
+                          isAvailable={isAvailable}
+                          onToggle={toggleAvailability}
+                          loading={availabilityLoading}
+                          disabled={!profile?.id}
+                        />
                       </div>
                     </div>
 
-                    {/* Academic Info Integrated */}
-                    {profile.college && (
-                      <div className="pt-2 border-t border-dashed border-white/20 space-y-2 text-left">
-                        <p className="text-xs font-bold uppercase tracking-widest text-muted text-center">Academic</p>
-                        <div className="text-sm text-body text-center space-y-0.5">
-                          <p className="font-bold">{profile.college}</p>
-                          <p className="text-muted text-xs">{profile.course} • {profile.year}</p>
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Availability & Actions */}
-                  <div className="mt-6 space-y-4 px-4 sm:px-6 pb-6">
-                    <div className="p-3 rounded-2xl bg-white/40 border border-white/50 shadow-inner backdrop-blur-sm flex items-center justify-between">
-                      <span className="text-xs font-bold text-body">Available to Work</span>
-                      <AvailabilityToggle
-                        isAvailable={isAvailable}
-                        onToggle={toggleAvailability}
-                        loading={availabilityLoading}
-                        disabled={!profile?.id}
-                      />
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      className="w-full rounded-xl py-3 border border-danger/10 text-danger hover:bg-danger/5 transition-all text-xs font-bold uppercase tracking-wide"
-                      onClick={signOut}
-                    >
-                      Sign Out
-                    </Button>
                   </div>
                 </Card>
               </motion.div>
-
             </div>
           </aside>
 
@@ -1378,80 +1327,92 @@ const StudentProfile = () => {
                       )}
 
                       {activityTab === 'applied' && (
-                        <div className="space-y-4 w-full overflow-hidden">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-body px-2 tracking-tight">Active Applications</h3>
-                            <div
-                              className="cursor-pointer text-xs font-bold text-primary flex items-center gap-1"
+                        <div className="space-y-6">
+                          <div className="flex items-center justify-between px-2">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Career Progress</h3>
+                            <button
+                              className="text-[10px] font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest flex items-center gap-2"
                               onClick={() => setIsEditingResume(!isEditingResume)}
                             >
-                              {profile?.resume_link ? 'Update Resume' : 'Add Resume'}
-                            </div>
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                              {profile?.resume_link ? 'Update Portfolio' : 'Link Portfolio'}
+                            </button>
                           </div>
 
                           <AnimatePresence>
                             {isEditingResume && (
                               <motion.div
-                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
-                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                                className="overflow-hidden"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="p-6 rounded-[1.5rem] bg-primary/5 border border-primary/10 space-y-4"
                               >
-                                <div className="rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-md p-6 shadow-inner space-y-4 mb-4">
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Portfolio / Resume URL</label>
                                   <div className="flex gap-2">
                                     <input
                                       value={resumeInput}
                                       onChange={(e) => { setResumeInput(e.target.value); setResumeError(''); }}
-                                      placeholder="https://..."
-                                      className="flex-1 rounded-xl border border-white/20 bg-white/50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
+                                      placeholder="https://behance.net/your-story"
+                                      className="flex-1 rounded-xl bg-white dark:bg-slate-900 border border-primary/20 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
                                     />
-                                    <Button variant="primary" onClick={handleSaveResume} disabled={resumeLoading} className="rounded-xl px-6">
-                                      {resumeLoading ? <Loader size="sm" inline /> : 'Save'}
+                                    <Button variant="primary" onClick={handleSaveResume} disabled={resumeLoading} className="rounded-xl px-6 py-2.5">
+                                      {resumeLoading ? <Loader size="sm" inline /> : 'Link'}
                                     </Button>
                                   </div>
-                                  {resumeError && <p className="text-xs font-bold text-danger px-1">{resumeError}</p>}
                                 </div>
+                                {resumeError && <p className="text-[10px] font-bold text-danger px-1">{resumeError}</p>}
                               </motion.div>
                             )}
                           </AnimatePresence>
 
                           {applicationsLoading ? (
-                            <div className="py-12"><Loader center /></div>
+                            <div className="py-20 flex justify-center"><Loader /></div>
                           ) : appliedJobs.length ? (
-                            <div className="grid gap-4 w-full overflow-hidden">
+                            <div className="space-y-4">
                               {appliedJobs.map((app) => (
                                 <div
                                   key={app.id}
-                                  className="group rounded-[2rem] border border-white/20 bg-white/5 p-6 shadow-sm hover:shadow-md hover:bg-white/10 transition-all"
+                                  className="group rounded-3xl border border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/5 p-6 transition-all hover:bg-white dark:hover:bg-white/10 hover:shadow-xl hover:shadow-black/5"
                                 >
-                                  <div className="flex justify-between items-start gap-4">
-                                    <div>
-                                      <p className="text-lg font-bold text-body">{app.job?.role_title || 'Role'}</p>
-                                      <p className="text-sm font-medium text-muted">{app.job?.company_name}</p>
+                                  <div className="flex justify-between items-start">
+                                    <div className="space-y-1">
+                                      <h4 className="text-base font-bold text-gray-900 dark:text-white tracking-tight">{app.job?.role_title || 'Software Engineer'}</h4>
+                                      <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                                        <span>{app.job?.company_name || 'Startup'}</span>
+                                        <span>&bull;</span>
+                                        <span>Applied {new Date(app.created_at || Date.now()).toLocaleDateString()}</span>
+                                      </div>
                                     </div>
-                                    <Badge
-                                      variant={app.status === 'Accepted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'neutral'}
-                                      className="uppercase tracking-wider font-bold rounded-lg px-3 py-1 text-[10px]"
-                                    >
-                                      {app.status}
-                                    </Badge>
+                                    <div className="flex flex-col items-end gap-2">
+                                      <Badge
+                                        variant={app.status === 'Accepted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'neutral'}
+                                        className="font-bold rounded-lg px-3 py-1 text-[9px] uppercase tracking-widest"
+                                      >
+                                        {app.status}
+                                      </Badge>
+                                    </div>
                                   </div>
 
                                   {(app.status === 'Accepted' || app.status === 'Rejected') && (
-                                    <div className={`mt-4 rounded-xl p-4 ${app.status === 'Accepted' ? 'bg-success/5 text-success' : 'bg-danger/5 text-danger'}`}>
-                                      <p className="text-sm font-semibold">
-                                        {app.status === 'Accepted' ? '🎉 Offer Received!' : 'Application Update'}
-                                      </p>
-                                      {app.rejection_reason && <p className="text-xs opacity-90 mt-1">{app.rejection_reason}</p>}
+                                    <div className={`mt-4 rounded-2xl p-4 ${app.status === 'Accepted' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'} border border-current/10`}>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-base">{app.status === 'Accepted' ? '🎊' : '📢'}</span>
+                                        <p className="text-xs font-bold uppercase tracking-wider">
+                                          {app.status === 'Accepted' ? 'Offer Received!' : 'Review Completed'}
+                                        </p>
+                                      </div>
+                                      {app.rejection_reason && <p className="text-xs font-medium opacity-80 pl-6 leading-relaxed">{app.rejection_reason}</p>}
                                     </div>
                                   )}
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <div className="flex flex-col items-center justify-center py-16 rounded-[2.5rem] border border-dashed border-white/20 bg-surface/30">
-                              <p className="text-muted font-medium">No active applications found.</p>
-                              <Button variant="ghost" onClick={() => navigate('/hire')} className="mt-2 text-primary hover:text-primary-dark">Find Opportunities</Button>
+                            <div className="flex flex-col items-center justify-center py-20 rounded-[2rem] border border-dashed border-gray-200 dark:border-white/10">
+                              <span className="text-4xl mb-4">🔍</span>
+                              <p className="text-sm font-bold text-gray-400">Target your next role. None applied yet.</p>
+                              <Button variant="ghost" onClick={() => navigate('/hire')} className="mt-4 text-primary font-bold text-xs uppercase tracking-widest hover:bg-primary/5">Browse Opportunities</Button>
                             </div>
                           )}
                         </div>
@@ -1461,12 +1422,49 @@ const StudentProfile = () => {
                 </div>
               </Card>
             </motion.div>
+
+            {/* Final Section - Links & Sign Out (Clean UX Pattern) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="flex flex-col items-center justify-center pt-16 pb-12 space-y-8"
+            >
+              <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <button onClick={() => navigate('/')} className="hover:text-primary transition-colors">Hub</button>
+                <button onClick={() => navigate('/notifications')} className="hover:text-primary transition-colors">Alerts</button>
+                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-primary transition-colors">Top</button>
+              </div>
+
+              <div className="w-full flex items-center justify-center gap-6">
+                <div className="h-px w-24 bg-gradient-to-r from-transparent to-gray-200 dark:to-white/10" />
+                <button
+                  onClick={signOut}
+                  className="group relative px-10 py-3.5 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 transition-all hover:border-danger/30 hover:shadow-lg hover:shadow-danger/5 active:scale-95"
+                >
+                  <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 group-hover:text-danger">
+                    Terminate Session
+                  </span>
+                  <div className="absolute inset-0 rounded-full bg-danger/0 group-hover:bg-danger/[0.02] transition-colors" />
+                </button>
+                <div className="h-px w-24 bg-gradient-to-l from-transparent to-gray-200 dark:to-white/10" />
+              </div>
+
+              <div className="space-y-1 text-center">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter opacity-50">
+                  Campus Startup Network
+                </p>
+                <p className="text-[9px] text-gray-300 dark:text-gray-600 font-medium">
+                  Ref 772-2024 &bull; Service Active
+                </p>
+              </div>
+            </motion.div>
           </main>
         </div>
-      </div>
+      </div >
 
       {/* Modals & Overlays */}
-      <AnimatePresence>
+      < AnimatePresence >
         {showForm && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-md px-4" onClick={() => setShowForm(false)}>
             <motion.div
@@ -1570,8 +1568,8 @@ const StudentProfile = () => {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence >
+    </div >
   );
 };
 

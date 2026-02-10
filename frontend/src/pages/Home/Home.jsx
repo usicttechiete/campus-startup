@@ -207,15 +207,30 @@ const Home = () => {
         </div>
 
         {/* Search bar */}
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search ideas, projects..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="w-full bg-gray-100 border-0 rounded-full py-2.5 px-10 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-          />
-          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <button
+              onClick={() => { /* Potential search trigger logic */ }}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-gray-200 transition-all z-10"
+              aria-label="Search"
+            >
+              <SearchIcon className="w-4 h-4 text-gray-500" />
+            </button>
+            <input
+              type="text"
+              placeholder="Search ideas, projects..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => e.key === 'Enter' && console.log('Searching:', searchTerm)}
+              className="w-full bg-gray-100 border-0 rounded-full py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+            />
+          </div>
+          <button
+            onClick={() => console.log('Searching:', searchTerm)}
+            className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-200 active:scale-95 transition"
+          >
+            Search
+          </button>
         </div>
 
         {/* Post Type Tabs */}

@@ -87,7 +87,15 @@ const Internships = () => {
   const [myJobsCount, setMyJobsCount] = useState(0);
   const [loadingMyJobs, setLoadingMyJobs] = useState(false);
 
-  const debouncedSearch = filters.search;
+  // Debounced search term
+  const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(filters.search);
+    }, 500); // 500ms debounce for smoother API calls
+    return () => clearTimeout(handler);
+  }, [filters.search]);
 
   const buildParams = useCallback(() => {
     const params = {};
@@ -115,6 +123,11 @@ const Internships = () => {
       setLoading(false);
     }
   }, [buildParams]);
+
+  const handleManualSearch = () => {
+    setDebouncedSearch(filters.search);
+    loadInternships();
+  };
 
   useEffect(() => {
     const nextFilters = { ...defaultFilters, ...parseFiltersFromParams(searchParams) };
@@ -214,15 +227,32 @@ const Internships = () => {
       )}
 
       {/* Search Bar */}
-      <div className="relative">
-        <SearchIcon className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted pointer-events-none" />
-        <input
-          type="text"
-          value={filters.search}
-          onChange={handleFilterChange('search')}
-          placeholder="Search internships..."
-          className="input pl-14"
-        />
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <button
+            type="button"
+            onClick={handleManualSearch}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-all z-10"
+            aria-label="Submit search"
+          >
+            <SearchIcon className="h-4 w-4 text-primary" />
+          </button>
+          <input
+            type="text"
+            value={filters.search}
+            onChange={handleFilterChange('search')}
+            onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
+            placeholder="Search roles, companies, or skills..."
+            className="input pl-14 shadow-sm"
+          />
+        </div>
+        <Button
+          variant="primary"
+          onClick={handleManualSearch}
+          className="rounded-xl px-6 font-bold shadow-md shadow-primary/20 transition-all active:scale-95"
+        >
+          Search
+        </Button>
       </div>
 
       {/* Filter Toggle & Active Filters */}
