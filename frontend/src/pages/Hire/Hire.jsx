@@ -69,7 +69,7 @@ const Hire = () => {
 
   const loadMyStartup = async () => {
     if (isAdmin) return;
-    
+
     setLoadingStartup(true);
     try {
       const data = await fetchMyApprovedStartup();
@@ -103,7 +103,7 @@ const Hire = () => {
 
   const loadApplicants = async (jobId) => {
     if (!jobId || applicantsByJob[jobId]) return; // Don't reload if already loaded
-    
+
     setLoadingApplicants(prev => ({ ...prev, [jobId]: true }));
     try {
       const data = await fetchJobApplicants(jobId);
@@ -139,7 +139,7 @@ const Hire = () => {
       ...prev,
       [jobId]: isExpanding
     }));
-    
+
     if (isExpanding) {
       loadApplicants(jobId);
     }
@@ -206,7 +206,7 @@ const Hire = () => {
     try {
       await updateApplicationStatus(applicationId, { status });
       // Reload applicants for the job
-      const jobId = Object.keys(applicantsByJob).find(jId => 
+      const jobId = Object.keys(applicantsByJob).find(jId =>
         applicantsByJob[jId].some(app => app.id === applicationId)
       );
       if (jobId) {
@@ -439,8 +439,8 @@ const Hire = () => {
                         <p className="text-xs text-text-muted">{companyJobs.length} role{companyJobs.length !== 1 ? 's' : ''}</p>
                       </div>
                     </div>
-                    <ChevronDownIcon 
-                      className={`h-5 w-5 text-text-muted transition-transform ${expandedCompanies[companyName] ? 'rotate-180' : ''}`} 
+                    <ChevronDownIcon
+                      className={`h-5 w-5 text-text-muted transition-transform ${expandedCompanies[companyName] ? 'rotate-180' : ''}`}
                     />
                   </button>
 
@@ -482,10 +482,10 @@ const Hire = () => {
                               className="w-full flex items-center justify-between p-3 rounded-lg bg-surface/50 hover:bg-surface transition-colors"
                             >
                               <span className="text-sm font-medium text-text-secondary">
-                                View Applicants ({applicantsByJob[job.id]?.length ?? 0})
+                                View Applicants ({applicantsByJob[job.id] ? applicantsByJob[job.id].length : (job.applicant_count ?? 0)})
                               </span>
-                              <ChevronDownIcon 
-                                className={`h-4 w-4 text-text-muted transition-transform ${expandedJobs[job.id] ? 'rotate-180' : ''}`} 
+                              <ChevronDownIcon
+                                className={`h-4 w-4 text-text-muted transition-transform ${expandedJobs[job.id] ? 'rotate-180' : ''}`}
                               />
                             </button>
                           </div>

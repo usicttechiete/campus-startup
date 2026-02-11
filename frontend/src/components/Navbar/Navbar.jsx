@@ -86,7 +86,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 bg-white border-t border-gray-200 shadow-lg"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-white/10 shadow-lg"
       style={{ width: '100%', maxWidth: '480px' }}
     >
       <div className="flex items-center justify-around px-1 py-2">
@@ -100,17 +100,17 @@ const Navbar = () => {
                 clsx(
                   'relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-xs font-medium transition-all',
                   isActive
-                    ? 'text-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white'
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-blue-50" />
+                    <span className="absolute inset-0 rounded-xl bg-blue-50 dark:bg-blue-900/20" />
                   )}
-                  <IconComponent className={clsx('relative z-10 h-5 w-5', isActive && 'text-blue-600')} />
+                  <IconComponent className={clsx('relative z-10 h-5 w-5', isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400')} />
                   <span className="relative z-10 text-[10px]">{item.label}</span>
                 </>
               )}

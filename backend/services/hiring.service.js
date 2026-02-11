@@ -6,8 +6,8 @@ const getJobs = async (filters) => {
   try {
     const jobs = await Job.findAll(filters);
 
-    // Fetch startup details for each job
-    const jobsWithStartup = await Promise.all(
+    // Fetch startup details and applicant counts for each job
+    const jobsWithDetails = await Promise.all(
       jobs.map(async (job) => {
         const { data: startup } = await supabase
           .from('startups')
@@ -15,14 +15,20 @@ const getJobs = async (filters) => {
           .eq('id', job.company_id)
           .single();
 
+        const { count: applicantCount } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('job_id', job.id);
+
         return {
           ...job,
           company_name: startup?.name || 'Unknown Startup',
+          applicant_count: applicantCount || 0,
         };
       })
     );
 
-    return jobsWithStartup;
+    return jobsWithDetails;
   } catch (error) {
     throw new Error(`Error fetching jobs: ${error.message}`);
   }
@@ -32,8 +38,8 @@ const getJobsByCompanyId = async (companyId) => {
   try {
     const jobs = await Job.findByCompanyId(companyId);
 
-    // Fetch startup details for each job
-    const jobsWithStartup = await Promise.all(
+    // Fetch startup details and applicant counts for each job
+    const jobsWithDetails = await Promise.all(
       jobs.map(async (job) => {
         const { data: startup } = await supabase
           .from('startups')
@@ -41,14 +47,20 @@ const getJobsByCompanyId = async (companyId) => {
           .eq('id', job.company_id)
           .single();
 
+        const { count: applicantCount } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('job_id', job.id);
+
         return {
           ...job,
           company_name: startup?.name || 'Unknown Startup',
+          applicant_count: applicantCount || 0,
         };
       })
     );
 
-    return jobsWithStartup;
+    return jobsWithDetails;
   } catch (error) {
     throw new Error(`Error fetching jobs by company: ${error.message}`);
   }
@@ -71,11 +83,24 @@ const getAllJobsWithStartups = async () => {
       throw new Error(error.message);
     }
 
-    // Format the response
-    return jobs.map(job => ({
-      ...job,
-      company_name: job.startups?.name || 'Unknown Startup',
-    }));
+    // Format the response and add applicant counts
+    const jobsWithDetails = await Promise.all(
+      jobs.map(async (job) => {
+        const { count: applicantCount } = await supabase
+          .from('applications')
+          .select('*', { count: 'exact', head: true })
+          .eq('job_id', job.id);
+
+        return {
+          ...job,
+          company_name: job.startups?.name || 'Unknown Startup',
+          applicant_count: applicantCount || 0,
+          startups: undefined, // Remove nested startups object
+        };
+      })
+    );
+
+    return jobsWithDetails;
   } catch (error) {
     throw new Error(`Error fetching all jobs: ${error.message}`);
   }

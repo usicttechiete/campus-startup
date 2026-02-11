@@ -162,6 +162,7 @@ const StudentProfile = () => {
 
   // Ref for scrolling to activity section when notification is clicked
   const activitySectionRef = useRef(null);
+  const profileTopRef = useRef(null);
 
   const [nameInput, setNameInput] = useState('');
   const [taglineInput, setTaglineInput] = useState('');
@@ -1078,7 +1079,7 @@ const StudentProfile = () => {
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20 pt-8 sm:pt-12">
+    <div ref={profileTopRef} className="min-h-screen bg-slate-50/50 pb-20 pt-8 sm:pt-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
 
@@ -1452,7 +1453,7 @@ const StudentProfile = () => {
               <div className="flex items-center gap-8 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <button onClick={() => navigate('/')} className="hover:text-primary transition-colors">Hub</button>
                 <button onClick={() => navigate('/notifications')} className="hover:text-primary transition-colors">Alerts</button>
-                <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-primary transition-colors">Top</button>
+                <button onClick={() => profileTopRef.current?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-primary transition-colors">Top</button>
               </div>
 
               <div className="w-full flex items-center justify-center gap-6">
