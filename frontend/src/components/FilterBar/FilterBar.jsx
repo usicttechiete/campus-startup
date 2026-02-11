@@ -19,8 +19,10 @@ const FilterBar = ({ filters = [], activeFilter, onFilterChange }) => {
           key={button.value}
           onClick={() => onFilterChange(button.value)}
           className={clsx(
-            'chip',
-            button.isActive && 'chip-active'
+            'px-4 py-2 text-xs font-medium border transition-all rounded-full whitespace-nowrap',
+            button.isActive
+              ? 'bg-primary text-white border-primary shadow-sm'
+              : 'bg-white text-text-secondary border-border hover:border-border-hover'
           )}
         >
           {button.label}

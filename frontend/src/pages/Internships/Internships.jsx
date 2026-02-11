@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Card from '../../components/Card/Card.jsx';
+import Button from '../../components/Button/Button.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
 import InternshipCard from '../../components/InternshipCard/InternshipCard.jsx';
 import {
@@ -243,7 +244,7 @@ const Internships = () => {
             onChange={handleFilterChange('search')}
             onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
             placeholder="Search roles, companies, or skills..."
-            className="input pl-14 shadow-sm"
+            className="input !pl-14 shadow-sm"
           />
         </div>
         <Button

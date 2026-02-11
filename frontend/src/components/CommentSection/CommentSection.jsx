@@ -77,7 +77,7 @@ const CommentSection = ({ postId, isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="modal-backdrop z-[1000]" onClick={onClose}>
+    <div className="modal-backdrop z-[10000]" onClick={onClose}>
       <div
         className="modal-content animate-slide-up"
         onClick={(e) => e.stopPropagation()}

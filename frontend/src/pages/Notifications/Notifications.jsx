@@ -90,7 +90,8 @@ const Notifications = () => {
                                     transition={{ delay: index * 0.05 }}
                                 >
                                     <Card
-                                        className={`p-6 rounded-[2rem] transition-all hover:shadow-lg border-l-4 ${notif.is_read ? 'border-l-transparent opacity-80' : 'border-l-primary bg-white shadow-md'
+                                        onClick={() => navigate('/profile?section=posts')}
+                                        className={`p-6 rounded-[2rem] transition-all hover:shadow-lg border-l-4 cursor-pointer ${notif.is_read ? 'border-l-transparent opacity-80' : 'border-l-primary bg-white shadow-md'
                                             }`}
                                     >
                                         <div className="flex gap-4 items-start">

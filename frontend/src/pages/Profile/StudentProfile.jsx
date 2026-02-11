@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Card from '../../components/Card/Card.jsx';
 import Badge from '../../components/Badge/Badge.jsx';
@@ -152,6 +152,7 @@ const StudentProfile = () => {
   const { signOut } = useAuth();
   const { role, refreshRole } = useRole();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -442,6 +443,16 @@ const StudentProfile = () => {
     loadActivity();
   }, [profile?.id]);
 
+  // Handle redirect from notifications to Posts (Activity) section
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('section') === 'posts' || location.hash === '#activity') {
+      setTimeout(() => {
+        activitySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500); // Small delay to ensure content is rendered
+    }
+  }, [location]);
+
   useEffect(() => {
     if (profile) {
       setNameInput(profile.name || '');
@@ -464,7 +475,7 @@ const StudentProfile = () => {
         skills: normalizeSkills(skillsDraft),
         college: collegeInput.trim(),
         course: courseInput.trim(),
-        year: yearInput.trim(),
+        year: String(yearInput || '').trim(),
       };
       const updatedProfile = await updateProfile(payload);
       setProfile(updatedProfile);
@@ -1290,10 +1301,10 @@ const StudentProfile = () => {
                       <p className="text-sm font-semibold text-danger">{activityError}</p>
                     </div>
                   ) : (
-                    <div className="grid gap-6 w-full overflow-hidden">
+                    <div className="grid gap-4 sm:gap-6 w-full overflow-hidden">
                       {activityTab === 'projects' && (
                         projectsPosted.length > 0 ? (
-                          <div className="grid gap-6 sm:grid-cols-2 w-full overflow-hidden">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full overflow-hidden">
                             {projectsPosted.map((post) => (
                               <div key={post.id} className="transition-transform duration-300 hover:-translate-y-1 min-w-0 w-full overflow-hidden">
                                 <PostCard

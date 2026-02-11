@@ -49,9 +49,9 @@ const ThumbsUpIcon = ({ filled, className }) => (
 );
 
 const stageColors = {
-  Ideation: 'bg-gray-100 text-gray-600',
-  MVP: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 border border-indigo-100/50',
-  Scaling: 'bg-gradient-to-r from-emerald-50 to-teal-50 text-teal-700 border border-teal-100/50',
+  Ideation: 'bg-bg-subtle text-text-secondary',
+  MVP: 'bg-gradient-to-r from-bg-subtle to-bg-subtle text-primary border border-border',
+  Scaling: 'bg-gradient-to-r from-bg-subtle to-bg-subtle text-primary border border-border',
 };
 
 const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
@@ -212,28 +212,28 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       tabIndex={0}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
-      className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 hover:shadow-md transition-shadow cursor-pointer active:bg-gray-50"
+      className="bg-bg-elevated border border-border rounded-xl p-4 space-y-3 hover:shadow-card transition-shadow cursor-pointer active:bg-bg-subtle"
     >
       {/* Header - Twitter style */}
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
           {initials || '?'}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-900 text-sm">{displayName}</span>
-            {role && <span className="text-gray-500 text-xs">@{role.toLowerCase().replace(/\s+/g, '')}</span>}
-            <span className="text-gray-400 text-xs">· {publishedTime}</span>
+            <span className="font-semibold text-text-primary text-sm">{displayName}</span>
+            {role && <span className="text-text-secondary text-xs">@{role.toLowerCase().replace(/\s+/g, '')}</span>}
+            <span className="text-text-muted text-xs">· {publishedTime}</span>
           </div>
           {/* Startup Name • College Name */}
           <div className="flex items-center gap-1.5 text-xs truncate max-w-full">
-            <span className="font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent shrink-0">
+            <span className="font-bold bg-gradient-to-r from-purple-600 to-primary bg-clip-text text-transparent shrink-0">
               {title} 🚀
             </span>
             {college && (
               <>
-                <span className="text-gray-300 shrink-0">•</span>
-                <span className="text-gray-500 truncate min-w-0">{college}</span>
+                <span className="text-text-muted shrink-0">•</span>
+                <span className="text-text-secondary truncate min-w-0">{college}</span>
               </>
             )}
           </div>
@@ -242,18 +242,18 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
         {/* Stage badge & menu */}
         <div className="flex items-center gap-2">
           {stage && (
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${stageColors[stage] || 'bg-gray-100 text-gray-600'}`}>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-xl ${stageColors[stage] || 'bg-bg-subtle text-text-secondary'}`}>
               {stage}
             </span>
           )}
           {isOwner && (
             <div className="relative" onClick={handleMenuClick}>
-              <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+              <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 rounded-xl hover:bg-bg-subtle text-text-muted">
                 <MoreIcon className="w-4 h-4" />
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-20 min-w-[100px]">
-                  <button onClick={handleDelete} disabled={deleteLoading} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                <div className="absolute right-0 top-full mt-1 bg-bg-elevated border border-border rounded-xl shadow-card py-1 z-20 min-w-[100px]">
+                  <button onClick={handleDelete} disabled={deleteLoading} className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-bg-subtle">
                     {deleteLoading ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
@@ -265,15 +265,15 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
       {/* Content - Reddit style */}
       <div className="space-y-2">
-        <h3 className="font-semibold text-gray-900 text-[15px] leading-snug break-words">{title}</h3>
+        <h3 className="font-semibold text-text-primary text-[15px] leading-snug break-words">{title}</h3>
         {description && (
-          <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap break-words">{description}</p>
+          <p className="text-text-secondary text-sm leading-relaxed whitespace-pre-wrap break-words">{description}</p>
         )}
       </div>
 
       {/* Image */}
       {hasImage && (
-        <div className="rounded-xl overflow-hidden border border-gray-100">
+        <div className="rounded-xl overflow-hidden border border-border">
           <img src={imageUrl} alt={title} loading="lazy" className="w-full h-auto max-h-80 object-cover" />
         </div>
       )}
@@ -282,24 +282,24 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
       {skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {skills.slice(0, 5).map((skill) => (
-            <span key={skill} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+            <span key={skill} className="text-xs bg-bg-subtle text-text-secondary px-2 py-0.5 rounded-xl">
               {skill}
             </span>
           ))}
           {skills.length > 5 && (
-            <span className="text-xs text-gray-400">+{skills.length - 5} more</span>
+            <span className="text-xs text-text-muted">+{skills.length - 5} more</span>
           )}
         </div>
       )}
 
       {/* Actions - Twitter style */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100" onClick={handleMenuClick}>
+      <div className="flex items-center justify-start gap-2 pt-2 border-t border-border" onClick={handleMenuClick}>
         <button
           onClick={handleLike}
           disabled={likeLoading}
-          className={`flex items-center justify-center gap-1.5 h-10 px-3 rounded-full transition min-w-[2.5rem] ${isLiked
+          className={`flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl transition min-w-[2.5rem] ${isLiked
             ? 'text-red-500 bg-red-50 hover:bg-red-100'
-            : 'text-gray-500 hover:text-red-500 hover:bg-red-50'
+            : 'text-text-secondary hover:text-red-500 hover:bg-bg-subtle'
             }`}
         >
           <HeartIcon filled={isLiked} className="w-5 h-5 flex-shrink-0" />
@@ -308,7 +308,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
         <button
           onClick={handleCommentClick}
-          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-50 transition"
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-text-secondary hover:text-primary hover:bg-bg-subtle transition"
           aria-label="Comment"
         >
           <CommentIcon className="w-5 h-5" />
@@ -318,9 +318,9 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
           <button
             onClick={handleLetsBuildClick}
             disabled={collabLoading}
-            className={`flex items-center justify-center w-10 h-10 rounded-full transition ${isCollaborator
+            className={`flex items-center justify-center w-10 h-10 rounded-xl transition ${isCollaborator
               ? 'text-amber-600 bg-amber-50'
-              : 'text-gray-500 hover:text-amber-600 hover:bg-amber-50'
+              : 'text-text-secondary hover:text-amber-600 hover:bg-bg-subtle'
               }`}
             aria-label="Let's Build"
           >
@@ -330,7 +330,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
         <button
           onClick={handleShareClick}
-          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-500 hover:text-green-500 hover:bg-green-50 transition"
+          className="flex items-center justify-center w-10 h-10 rounded-xl text-text-secondary hover:text-green-500 hover:bg-bg-subtle transition"
           aria-label="Share"
         >
           <ShareIcon className="w-5 h-5" />
@@ -347,18 +347,18 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
           onClick={handleConfirmClose}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-md"
+            className="w-full max-w-sm rounded-xl bg-bg-elevated p-5 shadow-card"
             onClick={handleCancelClose}
           >
-            <p className="text-sm font-medium text-gray-900">Join this project?</p>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="text-sm font-medium text-text-primary">Join this project?</p>
+            <p className="mt-1 text-xs text-text-secondary">
               The poster will get a notification and can see you want to build with them.
             </p>
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
                 onClick={handleCancelClose}
-                className="flex-1 rounded-full border border-gray-200 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+                className="flex-1 rounded-xl border border-border py-2 text-sm font-semibold text-text-secondary hover:bg-bg-subtle"
               >
                 Cancel
               </button>
@@ -366,7 +366,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
                 type="button"
                 onClick={handleConfirmLetsBuild}
                 disabled={collabLoading}
-                className="flex-1 rounded-full bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
               >
                 {collabLoading ? 'Joining...' : "Yes, I'm in"}
               </button>
