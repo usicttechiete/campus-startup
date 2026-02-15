@@ -18,7 +18,7 @@ import { useRole } from '../../context/RoleContext.jsx';
 import { useOnlineStatus, useAvailability } from '../../hooks/useOnlineStatus.js';
 import { fetchFeed } from '../../services/feed.api.js';
 import { fetchMyApplications } from '../../services/internship.api.js';
-import { getMyNotifications } from '../../services/notification.api.js';
+import { getMyNotifications, markNotificationRead } from '../../services/notification.api.js';
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
@@ -26,6 +26,7 @@ const tabConfig = [
   { key: 'startup', label: 'My Startup' },
 ];
 
+// Icons
 const SunIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="5" />
@@ -1045,9 +1046,6 @@ const StudentProfile = () => {
 
     return null;
   };
-
-
-
   if (loading) {
     return <ProfileSkeleton />;
   }
@@ -1378,6 +1376,7 @@ const StudentProfile = () => {
                         Applied
                       </button>
                     </div>
+
                   </div>
                 </div>
 
@@ -1572,8 +1571,7 @@ const StudentProfile = () => {
           </main>
         </div>
       </div >
-
-    </div >
+    </div>
   );
 };
 

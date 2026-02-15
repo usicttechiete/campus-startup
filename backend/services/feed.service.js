@@ -26,7 +26,7 @@ const getPostUpdates = async (postId) => {
 };
 
 const createPostUpdate = async (parentPostId, userId, updateDetails) => {
-  const { title, description, stage, required_skills } = updateDetails || {};
+  const { title, description } = updateDetails || {};
 
   if (!parentPostId || !userId) {
     throw new Error('Post ID and User ID are required');
@@ -58,8 +58,6 @@ const createPostUpdate = async (parentPostId, userId, updateDetails) => {
       authorId: userId,
       title,
       description,
-      stage,
-      required_skills,
     });
   } catch (error) {
     throw new Error(`Error creating update: ${error.message}`);

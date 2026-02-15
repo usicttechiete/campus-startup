@@ -69,7 +69,7 @@ const Post = {
     return Boolean(data);
   },
 
-  async createUpdate({ parentPostId, authorId, title, description, stage, required_skills }) {
+  async createUpdate({ parentPostId, authorId, title, description }) {
     const postData = {
       parent_post_id: parentPostId,
       author_id: authorId,
@@ -77,14 +77,6 @@ const Post = {
       description,
       post_type: 'work_update',
     };
-
-    if (stage) {
-      postData.stage = stage;
-    }
-
-    if (required_skills) {
-      postData.required_skills = required_skills;
-    }
 
     const { data, error } = await supabase.from('posts').insert(postData).select().single();
     if (error) {

@@ -20,7 +20,7 @@ const ProjectDetail = () => {
   const [updatesLoading, setUpdatesLoading] = useState(false);
   const [updatesError, setUpdatesError] = useState('');
   const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [updateForm, setUpdateForm] = useState({ title: '', description: '', stage: 'Ideation', required_skills: '' });
+  const [updateForm, setUpdateForm] = useState({ title: '', description: '' });
   const [updateSubmitting, setUpdateSubmitting] = useState(false);
 
   useEffect(() => {
@@ -124,13 +124,8 @@ const ProjectDetail = () => {
       await createPostUpdate(projectId, {
         title: updateForm.title,
         description: updateForm.description,
-        stage: updateForm.stage,
-        required_skills: updateForm.required_skills
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean),
       });
-      setUpdateForm({ title: '', description: '', stage: 'Ideation', required_skills: '' });
+      setUpdateForm({ title: '', description: '' });
       setShowUpdateForm(false);
       await loadUpdates();
     } catch (err) {
@@ -233,27 +228,6 @@ const ProjectDetail = () => {
                   placeholder="What changed since the last post?"
                   className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
                 />
-
-                <div className="grid grid-cols-2 gap-3">
-                  <select
-                    name="stage"
-                    value={updateForm.stage}
-                    onChange={handleUpdateFormChange}
-                    className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
-                  >
-                    <option value="Ideation">Ideation</option>
-                    <option value="MVP">MVP</option>
-                    <option value="Scaling">Scaling</option>
-                  </select>
-                  <input
-                    name="required_skills"
-                    value={updateForm.required_skills}
-                    onChange={handleUpdateFormChange}
-                    placeholder="Skills (comma sep)"
-                    className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
-                  />
-                </div>
-
                 <div className="flex justify-end">
                   <Button type="submit" size="sm" disabled={updateSubmitting}>
                     {updateSubmitting ? 'Posting...' : 'Publish update'}
@@ -275,12 +249,7 @@ const ProjectDetail = () => {
             ) : updates.length > 0 ? (
               <div className="space-y-3">
                 {updates.map((u) => (
-                  <button
-                    type="button"
-                    key={u.id || u.post_id}
-                    onClick={() => navigate(`/update/${u.id || u.post_id}`)}
-                    className="w-full rounded-2xl border border-border bg-bg p-4 text-left hover:bg-bg-subtle transition"
-                  >
+                  <div key={u.id || u.post_id} className="rounded-2xl border border-border bg-bg p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-body">{u.title}</p>
                       <p className="text-xs text-muted">{formatRelativeTime(u.created_at)}</p>
@@ -288,7 +257,7 @@ const ProjectDetail = () => {
                     {u.description && (
                       <p className="mt-2 whitespace-pre-wrap text-sm text-muted">{u.description}</p>
                     )}
-                  </button>
+                  </div>
                 ))}
               </div>
             ) : (

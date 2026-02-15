@@ -164,8 +164,8 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
   const handleCardClick = useCallback(() => {
     if (!actualPostId) return;
-    if (postType === 'work_update') {
-      navigate(`/update/${actualPostId}`);
+    if (postType === 'work_update' && parentPostId) {
+      navigate(`/project/${parentPostId}`);
       return;
     }
     navigate(`/project/${actualPostId}`);
