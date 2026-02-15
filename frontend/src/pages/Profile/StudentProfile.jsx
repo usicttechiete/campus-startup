@@ -16,38 +16,15 @@ import { formatLevel, formatTrustScore } from '../../utils/formatters.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useRole } from '../../context/RoleContext.jsx';
 import { useOnlineStatus, useAvailability } from '../../hooks/useOnlineStatus.js';
-import { fetchFeed, createFeedPost } from '../../services/feed.api.js';
+import { fetchFeed } from '../../services/feed.api.js';
 import { fetchMyApplications } from '../../services/internship.api.js';
-import { getMyNotifications, markNotificationRead } from '../../services/notification.api.js';
+import { getMyNotifications } from '../../services/notification.api.js';
 import PostCard from '../../components/PostCard/PostCard.jsx';
 
 const tabConfig = [
   { key: 'profile', label: 'Profile' },
   { key: 'startup', label: 'My Startup' },
 ];
-
-const initialFormState = {
-  title: '',
-  description: '',
-  stage: 'Ideation',
-  required_skills: '',
-  post_type: 'project',
-};
-
-// Icons
-const PlusIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
-  </svg>
-);
-
-const CloseIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
 
 const SunIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -245,17 +222,6 @@ const StudentProfile = () => {
   const [activityPosts, setActivityPosts] = useState([]);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState('');
-
-  // Create Post States
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(initialFormState);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState(null);
-
-  const postTypes = [
-    { label: 'Project', value: 'project' },
-    { label: 'Idea', value: 'startup_idea' },
-  ];
 
   // Online status and availability hooks
   const { isOnline } = useOnlineStatus(profile?.id);
@@ -1082,51 +1048,6 @@ const StudentProfile = () => {
 
 
 
-  // Create Post Handlers
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreatePost = async (e) => {
-    e.preventDefault();
-    setFormLoading(true);
-    setFormError(null);
-    try {
-      const postData = {
-        title: form.title,
-        description: form.description,
-        post_type: form.post_type,
-      };
-      if (form.post_type !== 'work_update') {
-        postData.stage = form.stage;
-        postData.required_skills = form.required_skills.split(',').map(s => s.trim()).filter(Boolean);
-      }
-      const newPost = await createFeedPost(postData);
-
-      // Optimistic update
-      setActivityPosts((prev) => [newPost, ...prev]);
-
-      setShowForm(false);
-      setForm(initialFormState);
-
-      // Switch tab to the relevant one
-      if (form.post_type === 'work_update') {
-        setActivityTab('updates');
-      } else {
-        setActivityTab('projects');
-      }
-    } catch (err) {
-      setFormError(err.message || 'Failed to create post');
-    }
-    setFormLoading(false);
-  };
-
-  const getFormTitle = () => {
-    const types = { startup_idea: 'Share Idea', project: 'Share Project', work_update: 'Post Update' };
-    return types[form.post_type] || 'Create Post';
-  };
-
   if (loading) {
     return <ProfileSkeleton />;
   }
@@ -1457,16 +1378,6 @@ const StudentProfile = () => {
                         Applied
                       </button>
                     </div>
-
-                    {role === 'student' && (
-                      <button
-                        onClick={() => setShowForm(true)}
-                        className="flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl shadow-lg shadow-primary/25 hover:scale-105 transition active:scale-95 whitespace-nowrap"
-                      >
-                        <PlusIcon className="w-3.5 h-3.5" />
-                        Create
-                      </button>
-                    )}
                   </div>
                 </div>
 
@@ -1662,112 +1573,6 @@ const StudentProfile = () => {
         </div>
       </div >
 
-      {/* Modals & Overlays */}
-      < AnimatePresence >
-        {showForm && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-md px-4" onClick={() => setShowForm(false)}>
-            <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              className="w-full max-w-xl bg-bg-elevated rounded-[3rem] shadow-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between p-8 border-b border-border/10 bg-gradient-to-r from-primary/5 to-transparent">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-bold text-body tracking-tight">{getFormTitle()}</h2>
-                  <p className="text-sm text-muted px-0.5">Share your brilliance with the community</p>
-                </div>
-                <button onClick={() => setShowForm(false)} className="p-3 rounded-full hover:bg-surface transition-colors" aria-label="Close modal">
-                  <CloseIcon className="w-5 h-5 text-muted" />
-                </button>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleCreatePost} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                {/* Post Type Selector */}
-                <div className="grid grid-cols-3 gap-3 p-1.5 rounded-[1.5rem] bg-body/5">
-                  {postTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, post_type: type.value }))}
-                      className={`py-3 text-xs font-bold rounded-2xl transition-all ${form.post_type === type.value
-                        ? 'bg-white text-primary shadow-sm scale-[1.02]'
-                        : 'text-muted hover:text-body'
-                        }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Headline</label>
-                    <input
-                      name="title"
-                      required
-                      value={form.title}
-                      onChange={handleFormChange}
-                      placeholder={form.post_type === 'work_update' ? "What did you achieve today?" : "Ex: Decentralized Campus Marketplace"}
-                      className="w-full rounded-2xl border border-border/60 bg-surface px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Detailed Insight</label>
-                    <textarea
-                      name="description"
-                      rows={4}
-                      required
-                      value={form.description}
-                      onChange={handleFormChange}
-                      placeholder="Deep dive into your project or update..."
-                      className="w-full rounded-2xl border border-border/60 bg-surface px-5 py-4 text-sm resize-none outline-none focus:ring-2 focus:ring-primary transition-all"
-                    />
-                  </div>
-
-                  {form.post_type !== 'work_update' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Development Phase</label>
-                        <select
-                          name="stage"
-                          value={form.stage}
-                          onChange={handleFormChange}
-                          className="w-full rounded-2xl border border-border/60 bg-surface px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary appearance-none cursor-pointer"
-                        >
-                          <option value="Ideation">Ideation</option>
-                          <option value="MVP">MVP</option>
-                          <option value="Scaling">Scaling</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase tracking-widest text-muted px-1">Tech Stack</label>
-                        <input
-                          name="required_skills"
-                          value={form.required_skills}
-                          onChange={handleFormChange}
-                          placeholder="React, AWS, Node..."
-                          className="w-full rounded-2xl border border-border/60 bg-surface px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {formError && <p className="text-sm font-semibold text-danger bg-danger/5 p-4 rounded-2xl border border-danger/10">{formError}</p>}
-
-                <Button type="submit" variant="primary" className="w-full rounded-2xl py-6 shadow-xl shadow-primary/20 text-sm font-bold uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all" disabled={formLoading}>
-                  {formLoading ? <Loader size="sm" inline /> : 'Broadcast to Campus'}
-                </Button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence >
     </div >
   );
 };
