@@ -1171,7 +1171,7 @@ const StudentProfile = () => {
                                 ? 'bg-green-500 hover:bg-green-600 text-white border-2 border-green-600'
                                 : 'bg-gray-400 hover:bg-gray-500 text-white border-2 border-gray-500'
                                 } ${(availabilityLoading || !profile?.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              aria-label="Toggle Availability"
+                              aria-label="Toggle Active Status"
                             >
                               {availabilityLoading ? (
                                 <>
@@ -1187,7 +1187,7 @@ const StudentProfile = () => {
                                         }`} />
                                     </div>
                                   </div>
-                                  <span>{isAvailable ? 'Available' : 'Unavailable'}</span>
+                                  <span>{isAvailable ? 'Active' : 'Unactive'}</span>
                                 </>
                               )}
                             </button>
@@ -1250,11 +1250,7 @@ const StudentProfile = () => {
                         <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 ring-3 sm:ring-4 ring-white/50 rounded-full">
                           <OnlineStatusDot isOnline={isOnline} size="large" />
                         </div>
-                        {isAvailable && (
-                          <div className="absolute -top-1 -right-1 bg-success text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg border-2 border-white animate-pulse">
-                            ACTIVE
-                          </div>
-                        )}
+
                       </div>
                     </div>
 
@@ -1302,9 +1298,7 @@ const StudentProfile = () => {
                       </div>
 
                       <div className="flex flex-wrap justify-center gap-2">
-                        <Badge className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 rounded-full px-3 py-1 font-bold text-[10px] tracking-widest shadow-sm">
-                          LVL {profile.level_badge || profile.level || formatLevel(profile.level) || '1'}
-                        </Badge>
+                        {/* LVL badge will be added after deployment/phase 2 */}
                         <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-3 py-1 font-bold text-[10px] tracking-widest shadow-sm">
                           {profile.role?.toUpperCase()}
                         </Badge>
