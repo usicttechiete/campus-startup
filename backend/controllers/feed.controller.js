@@ -4,6 +4,8 @@ import {
   joinPost,
   getPostById,
   deletePost,
+  getPostUpdates,
+  createPostUpdate,
 } from '../services/feed.service.js';
 
 const getFeedController = async (req, res) => {
@@ -30,7 +32,7 @@ const getPostByIdController = async (req, res) => {
 
 const createPostController = async (req, res) => {
   try {
-    const post = await createPost(req.body, req.user.id);
+    const post = await createPost(req.user.id, req.body);
     res.status(201).json(post);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -57,10 +59,32 @@ const deletePostController = async (req, res) => {
   }
 };
 
+const getPostUpdatesController = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const updates = await getPostUpdates(postId);
+    return res.status(200).json({ results: updates });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+const createPostUpdateController = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const update = await createPostUpdate(postId, req.user.id, req.body);
+    return res.status(201).json(update);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
 export {
   getFeedController,
   getPostByIdController,
   createPostController,
   joinPostController,
   deletePostController,
+  getPostUpdatesController,
+  createPostUpdateController,
 };

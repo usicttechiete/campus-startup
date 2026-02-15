@@ -9,6 +9,63 @@ const getFeed = async (filters) => {
   }
 };
 
+const getPostUpdates = async (postId) => {
+  if (!postId) {
+    throw new Error('Post ID is required');
+  }
+
+  try {
+    const parent = await Post.findById(postId);
+    if (!parent) {
+      throw new Error('Post not found');
+    }
+    return await Post.findUpdatesByParentId(postId);
+  } catch (error) {
+    throw new Error(`Error fetching updates: ${error.message}`);
+  }
+};
+
+const createPostUpdate = async (parentPostId, userId, updateDetails) => {
+  const { title, description, stage, required_skills } = updateDetails || {};
+
+  if (!parentPostId || !userId) {
+    throw new Error('Post ID and User ID are required');
+  }
+
+  if (!title || !description) {
+    throw new Error('Title and description are required');
+  }
+
+  try {
+    const parent = await Post.findById(parentPostId);
+    if (!parent) {
+      throw new Error('Post not found');
+    }
+
+    if (parent.post_type === 'work_update') {
+      throw new Error('Updates can only be created for projects');
+    }
+
+    const isOwner = parent.author_id === userId;
+    const isCollaborator = await Post.isCollaborator(parentPostId, userId);
+
+    if (!isOwner && !isCollaborator) {
+      throw new Error('Only the post author or collaborators can create updates');
+    }
+
+    return await Post.createUpdate({
+      parentPostId: parentPostId,
+      authorId: userId,
+      title,
+      description,
+      stage,
+      required_skills,
+    });
+  } catch (error) {
+    throw new Error(`Error creating update: ${error.message}`);
+  }
+};
+
 const getPostById = async (postId) => {
   if (!postId) {
     throw new Error('Post ID is required');
@@ -33,6 +90,10 @@ const createPost = async (authorId, postDetails) => {
   const validPostTypes = ['startup_idea', 'project', 'work_update'];
   if (!validPostTypes.includes(post_type)) {
     throw new Error('Invalid post type. Valid types are: startup_idea, project, work_update');
+  }
+
+  if (post_type === 'work_update') {
+    throw new Error('Updates must be posted against a project. Use the project update endpoint.');
   }
 
   // Stage is only required for startup ideas and projects
@@ -115,4 +176,6 @@ export {
   joinPost,
   getPostById,
   deletePost,
+  getPostUpdates,
+  createPostUpdate,
 };

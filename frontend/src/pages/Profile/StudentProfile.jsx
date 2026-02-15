@@ -254,7 +254,6 @@ const StudentProfile = () => {
 
   const postTypes = [
     { label: 'Project', value: 'project' },
-    { label: 'Update', value: 'work_update' },
     { label: 'Idea', value: 'startup_idea' },
   ];
 

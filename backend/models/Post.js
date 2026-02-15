@@ -35,6 +35,64 @@ const Post = {
     return data;
   },
 
+  async findUpdatesByParentId(parentPostId) {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        author:users(id, name, avatar_url, role, college, course, branch, year),
+        collaborators:post_collaborators(user:users(id, name, avatar_url)),
+        comment_count:comments(count),
+        like_count:likes(count)
+      `)
+      .eq('post_type', 'work_update')
+      .eq('parent_post_id', parentPostId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data;
+  },
+
+  async isCollaborator(postId, userId) {
+    const { data, error } = await supabase
+      .from('post_collaborators')
+      .select('post_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    return Boolean(data);
+  },
+
+  async createUpdate({ parentPostId, authorId, title, description, stage, required_skills }) {
+    const postData = {
+      parent_post_id: parentPostId,
+      author_id: authorId,
+      title,
+      description,
+      post_type: 'work_update',
+    };
+
+    if (stage) {
+      postData.stage = stage;
+    }
+
+    if (required_skills) {
+      postData.required_skills = required_skills;
+    }
+
+    const { data, error } = await supabase.from('posts').insert(postData).select().single();
+    if (error) {
+      throw new Error(error.message);
+    }
+    return data;
+  },
+
   async findById(postId) {
     const { data, error } = await supabase
       .from('posts')

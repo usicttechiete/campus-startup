@@ -73,6 +73,7 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
   const {
     id: postId,
     post_id,
+    parent_post_id: parentPostId,
     author_id: authorId,
     author,
     authorProfile,
@@ -163,8 +164,12 @@ const PostCard = ({ post, onPostDeleted, onPostCollaborated }) => {
 
   const handleCardClick = useCallback(() => {
     if (!actualPostId) return;
+    if (postType === 'work_update') {
+      navigate(`/update/${actualPostId}`);
+      return;
+    }
     navigate(`/project/${actualPostId}`);
-  }, [actualPostId, navigate]);
+  }, [actualPostId, navigate, parentPostId, postType]);
 
   const handleLetsBuildConfirm = useCallback(() => {
     setShowLetsBuildConfirm(true);

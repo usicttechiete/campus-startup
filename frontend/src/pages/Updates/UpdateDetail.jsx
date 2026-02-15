@@ -2,42 +2,48 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Card from '../../components/Card/Card.jsx';
 import Loader from '../../components/Loader/Loader.jsx';
-import Badge from '../../components/Badge/Badge.jsx';
 import Button from '../../components/Button/Button.jsx';
-import { createPostUpdate, fetchFeedPostById, fetchPostUpdates } from '../../services/feed.api.js';
-import { formatName, formatRelativeTime, formatRole, formatSkills, getInitials } from '../../utils/formatters.js';
+import {
+  createPostUpdate,
+  fetchFeedPostById,
+  fetchPostUpdates,
+} from '../../services/feed.api.js';
+import { formatName, formatRelativeTime, formatRole, getInitials } from '../../utils/formatters.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-const ProjectDetail = () => {
-  const { id: projectId } = useParams();
+const UpdateDetail = () => {
+  const { id: updateId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const [updatePost, setUpdatePost] = useState(null);
   const [project, setProject] = useState(null);
+  const [updates, setUpdates] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [updates, setUpdates] = useState([]);
   const [updatesLoading, setUpdatesLoading] = useState(false);
   const [updatesError, setUpdatesError] = useState('');
+
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [updateForm, setUpdateForm] = useState({ title: '', description: '', stage: 'Ideation', required_skills: '' });
-  const [updateSubmitting, setUpdateSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!updateId) return;
     let mounted = true;
 
-    const loadProject = async () => {
+    const loadUpdate = async () => {
       setLoading(true);
       setError('');
       try {
-        const data = await fetchFeedPostById(projectId);
-        if (mounted) {
-          setProject(data);
-        }
+        const data = await fetchFeedPostById(updateId);
+        if (!mounted) return;
+        setUpdatePost(data);
       } catch (err) {
         if (mounted) {
-          setError(err.message || 'Unable to load project');
+          setError(err.message || 'Unable to load update');
         }
       } finally {
         if (mounted) {
@@ -46,18 +52,42 @@ const ProjectDetail = () => {
       }
     };
 
+    loadUpdate();
+    return () => {
+      mounted = false;
+    };
+  }, [updateId]);
+
+  const parentPostId = updatePost?.parent_post_id;
+
+  useEffect(() => {
+    if (!parentPostId) return;
+    let mounted = true;
+
+    const loadProject = async () => {
+      try {
+        const data = await fetchFeedPostById(parentPostId);
+        if (!mounted) return;
+        setProject(data);
+      } catch (err) {
+        if (mounted) {
+          setProject(null);
+        }
+      }
+    };
+
     loadProject();
     return () => {
       mounted = false;
     };
-  }, [projectId]);
+  }, [parentPostId]);
 
   const loadUpdates = useCallback(async () => {
-    if (!projectId) return;
+    if (!parentPostId) return;
     setUpdatesLoading(true);
     setUpdatesError('');
     try {
-      const res = await fetchPostUpdates(projectId);
+      const res = await fetchPostUpdates(parentPostId);
       setUpdates(Array.isArray(res?.results) ? res.results : []);
     } catch (err) {
       setUpdates([]);
@@ -65,41 +95,11 @@ const ProjectDetail = () => {
     } finally {
       setUpdatesLoading(false);
     }
-  }, [projectId]);
+  }, [parentPostId]);
 
   useEffect(() => {
     loadUpdates();
   }, [loadUpdates]);
-
-  const header = useMemo(() => {
-    if (!project) return null;
-    const authorData = project.author || project.authorProfile || {};
-    const displayName = formatName(authorData.name);
-    const role = formatRole(authorData.role);
-    const initials = getInitials(displayName);
-    const published = formatRelativeTime(project.created_at);
-
-    return (
-      <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white">
-              {initials || 'P'}
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted">Posted by</p>
-              <p className="text-base font-semibold text-body">{displayName}</p>
-              {role && <p className="text-xs text-muted">{role}</p>}
-              {published && <p className="text-xs text-muted">{published}</p>}
-            </div>
-          </div>
-          {project.stage && <Badge variant="neutral">{project.stage}</Badge>}
-        </div>
-      </section>
-    );
-  }, [project]);
-
-  const skills = formatSkills(project?.required_skills);
 
   const isOwner = Boolean(user?.id && project?.author_id && user.id === project.author_id);
   const collaborators = Array.isArray(project?.collaborators) ? project.collaborators : [];
@@ -108,20 +108,21 @@ const ProjectDetail = () => {
   );
   const canPostUpdate = isOwner || isCollaborator;
 
-  const handleUpdateFormChange = useCallback((e) => {
+  const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
     setUpdateForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSubmitUpdate = useCallback(async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    if (!projectId) return;
-    if (updateSubmitting) return;
+    if (!parentPostId) return;
+    if (submitting) return;
 
-    setUpdateSubmitting(true);
+    setSubmitting(true);
     setUpdatesError('');
+
     try {
-      await createPostUpdate(projectId, {
+      await createPostUpdate(parentPostId, {
         title: updateForm.title,
         description: updateForm.description,
         stage: updateForm.stage,
@@ -136,9 +137,35 @@ const ProjectDetail = () => {
     } catch (err) {
       setUpdatesError(err.message || 'Failed to post update');
     } finally {
-      setUpdateSubmitting(false);
+      setSubmitting(false);
     }
-  }, [projectId, updateForm.title, updateForm.description, updateSubmitting, loadUpdates]);
+  }, [loadUpdates, parentPostId, submitting, updateForm.description, updateForm.required_skills, updateForm.stage, updateForm.title]);
+
+  const header = useMemo(() => {
+    const authorData = updatePost?.author || updatePost?.authorProfile || {};
+    const displayName = formatName(authorData.name) || 'Anonymous';
+    const role = formatRole(authorData.role);
+    const initials = getInitials(displayName);
+    const published = formatRelativeTime(updatePost?.created_at);
+
+    return (
+      <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-semibold text-white">
+              {initials || 'U'}
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted">Update by</p>
+              <p className="text-base font-semibold text-body">{displayName}</p>
+              {role && <p className="text-xs text-muted">{role}</p>}
+              {published && <p className="text-xs text-muted">{published}</p>}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }, [updatePost]);
 
   return (
     <div className="space-y-6">
@@ -146,14 +173,21 @@ const ProjectDetail = () => {
         <button type="button" onClick={() => navigate(-1)} className="text-sm font-semibold text-primary">
           ← Back
         </button>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/internships')} className="rounded-full px-4">
-          Browse internships
-        </Button>
+        {parentPostId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/project/${parentPostId}`)}
+            className="rounded-full px-4"
+          >
+            View project
+          </Button>
+        )}
       </div>
 
       {loading && (
         <div className="flex justify-center py-10">
-          <Loader label="Loading project" />
+          <Loader label="Loading update" />
         </div>
       )}
 
@@ -163,45 +197,21 @@ const ProjectDetail = () => {
         </Card>
       )}
 
-      {!loading && !error && project && (
+      {!loading && !error && updatePost && (
         <div className="space-y-5">
           <section className="rounded-3xl bg-gradient-to-br from-[#0F172A] via-[#1E1B4B] to-[#312E81] p-6 text-white shadow-lg">
-            <p className="text-xs uppercase tracking-wide text-white/70">Project</p>
-            <h1 className="mt-2 text-2xl font-semibold">{project.title}</h1>
-            {project.description && (
-              <p className="mt-3 text-sm leading-relaxed text-white/80">{project.description}</p>
+            <p className="text-xs uppercase tracking-wide text-white/70">Update</p>
+            <h1 className="mt-2 text-2xl font-semibold">{updatePost.title}</h1>
+            {updatePost.description && (
+              <p className="mt-3 text-sm leading-relaxed text-white/80">{updatePost.description}</p>
             )}
           </section>
 
           {header}
 
-          <section className="grid gap-4 sm:grid-cols-2">
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Project type</h3>
-              <p className="text-sm text-muted">{project.post_type || 'Project'}</p>
-            </Card>
-            <Card className="space-y-2 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Collaboration</h3>
-              <p className="text-sm text-muted">Looking for collaborators and feedback.</p>
-            </Card>
-          </section>
-
-          {skills.length > 0 && (
-            <Card className="space-y-3 border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold text-body">Skills needed</h3>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <span key={skill} className="rounded-full bg-surface px-3 py-1 text-xs font-semibold text-muted">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </Card>
-          )}
-
           <Card className="space-y-4 border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-body">Updates</h3>
+              <h3 className="text-sm font-semibold text-body">Post another update</h3>
               {canPostUpdate && (
                 <Button
                   size="sm"
@@ -214,13 +224,19 @@ const ProjectDetail = () => {
               )}
             </div>
 
+            {!canPostUpdate && (
+              <p className="text-sm text-muted">
+                Only the project author or collaborators can post updates.
+              </p>
+            )}
+
             {showUpdateForm && canPostUpdate && (
-              <form onSubmit={handleSubmitUpdate} className="space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <input
                   name="title"
                   required
                   value={updateForm.title}
-                  onChange={handleUpdateFormChange}
+                  onChange={handleFormChange}
                   placeholder="Update title"
                   className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
                 />
@@ -229,7 +245,7 @@ const ProjectDetail = () => {
                   required
                   rows={3}
                   value={updateForm.description}
-                  onChange={handleUpdateFormChange}
+                  onChange={handleFormChange}
                   placeholder="What changed since the last post?"
                   className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
                 />
@@ -238,7 +254,7 @@ const ProjectDetail = () => {
                   <select
                     name="stage"
                     value={updateForm.stage}
-                    onChange={handleUpdateFormChange}
+                    onChange={handleFormChange}
                     className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
                   >
                     <option value="Ideation">Ideation</option>
@@ -248,15 +264,15 @@ const ProjectDetail = () => {
                   <input
                     name="required_skills"
                     value={updateForm.required_skills}
-                    onChange={handleUpdateFormChange}
+                    onChange={handleFormChange}
                     placeholder="Skills (comma sep)"
                     className="w-full rounded-xl border border-border bg-bg px-4 py-2 text-sm"
                   />
                 </div>
 
                 <div className="flex justify-end">
-                  <Button type="submit" size="sm" disabled={updateSubmitting}>
-                    {updateSubmitting ? 'Posting...' : 'Publish update'}
+                  <Button type="submit" size="sm" disabled={submitting}>
+                    {submitting ? 'Posting...' : 'Publish update'}
                   </Button>
                 </div>
               </form>
@@ -267,6 +283,22 @@ const ProjectDetail = () => {
                 {updatesError}
               </div>
             )}
+          </Card>
+
+          <Card className="space-y-4 border border-border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-body">All updates for this project</h3>
+              {parentPostId && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={loadUpdates}
+                  className="rounded-full px-4"
+                >
+                  Refresh
+                </Button>
+              )}
+            </div>
 
             {updatesLoading ? (
               <div className="flex justify-center py-6">
@@ -279,7 +311,9 @@ const ProjectDetail = () => {
                     type="button"
                     key={u.id || u.post_id}
                     onClick={() => navigate(`/update/${u.id || u.post_id}`)}
-                    className="w-full rounded-2xl border border-border bg-bg p-4 text-left hover:bg-bg-subtle transition"
+                    className={`w-full rounded-2xl border border-border p-4 text-left transition ${
+                      (u.id || u.post_id) === updateId ? 'bg-bg-subtle' : 'bg-bg hover:bg-bg-subtle'
+                    }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-body">{u.title}</p>
@@ -301,4 +335,4 @@ const ProjectDetail = () => {
   );
 };
 
-export default ProjectDetail;
+export default UpdateDetail;

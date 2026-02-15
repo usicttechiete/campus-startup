@@ -11,9 +11,13 @@ import useFeedPosts from '../../hooks/useFeedPosts.js';
 const JobsSuggestions = lazy(() => import('../../components/JobsSuggestions/JobsSuggestions.jsx'));
 const StartupsSuggestions = lazy(() => import('../../components/StartupsSuggestions/StartupsSuggestions.jsx'));
 
-const postTypes = [
+const feedPostTypes = [
   { label: 'Projects', value: 'project' },
   { label: 'Updates', value: 'work_update' },
+];
+
+const createPostTypes = [
+  { label: 'Projects', value: 'project' },
 ];
 
 const stageFilters = [
@@ -276,7 +280,7 @@ const Home = () => {
 
             {/* Post Type Tabs */}
             <div className="flex border-b border-border">
-              {postTypes.map((type) => (
+              {feedPostTypes.map((type) => (
                 <button
                   key={type.value}
                   onClick={() => handlePostTypeChange(type.value)}
@@ -360,7 +364,7 @@ const Home = () => {
                 <form onSubmit={handleCreatePost} className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
                   {/* Post Type */}
                   <div className="flex gap-2">
-                    {postTypes.map((type) => (
+                    {createPostTypes.map((type) => (
                       <button
                         key={type.value}
                         type="button"

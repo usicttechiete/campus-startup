@@ -20,3 +20,11 @@ export const deleteFeedPost = (postId) =>
   apiFetch(`/api/feed/posts/${postId}`, {
     method: 'DELETE',
   });
+
+export const fetchPostUpdates = (postId) => apiFetch(`/api/feed/posts/${postId}/updates`);
+
+export const createPostUpdate = (postId, payload) =>
+  apiFetch(`/api/feed/posts/${postId}/updates`, {
+    method: 'POST',
+    data: payload,
+  });
