@@ -637,45 +637,7 @@ const StudentProfile = () => {
     if (activeTab === 'profile') {
       return (
         <div className="space-y-8">
-          {/* Bio & Professional Info */}
-          <div className="space-y-6">
-            {isEditingProfile ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Full Name</label>
-                  <input
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Tagline</label>
-                  <input
-                    value={taglineInput}
-                    onChange={(e) => setTaglineInput(e.target.value)}
-                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Bio</label>
-                  <textarea
-                    value={bioInput}
-                    onChange={(e) => setBioInput(e.target.value)}
-                    rows={4}
-                    className="w-full rounded-xl border border-primary/20 bg-white/50 dark:bg-slate-900 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
-                    placeholder="Tell your story..."
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-body/90 leading-relaxed font-medium">
-                  {profile.bio || profile.about || "Sharing my journey in the startup ecosystem."}
-                </p>
-              </div>
-            )}
-          </div>
+          {/* Bio & Professional Info - Moved to Header Tile */}
 
           {/* Skills & Academic Info Card */}
           <div className="rounded-[2rem] bg-body/5 border border-body/10 p-6 sm:p-8 space-y-8">
@@ -1299,15 +1261,44 @@ const StudentProfile = () => {
                     {/* User Info & Badges */}
                     <div className="text-center space-y-4 px-4 sm:px-6">
                       <div className="space-y-1">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight break-words max-w-full">
-                          {getDisplayName(profile)}
-                        </h1>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                          {profile.email}
-                        </p>
-                        <p className="text-sm font-semibold text-primary dark:text-primary-light uppercase tracking-wider">
-                          {profile.tagline || profile.headline || ""}
-                        </p>
+                        {isEditingProfile ? (
+                          <div className="space-y-3">
+                            <input
+                              value={nameInput}
+                              onChange={(e) => setNameInput(e.target.value)}
+                              className="w-full text-center text-lg sm:text-xl font-bold bg-white/50 dark:bg-black/20 border border-primary/20 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="Your Name"
+                            />
+                            <input
+                              value={taglineInput}
+                              onChange={(e) => setTaglineInput(e.target.value)}
+                              className="w-full text-center text-xs font-semibold uppercase tracking-wider bg-white/50 dark:bg-black/20 border border-primary/20 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="Tagline"
+                            />
+                            <textarea
+                              value={bioInput}
+                              onChange={(e) => setBioInput(e.target.value)}
+                              rows={3}
+                              className="w-full text-center text-sm bg-white/50 dark:bg-black/20 border border-primary/20 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary resize-none"
+                              placeholder="Tell your story..."
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight break-words max-w-full">
+                              {getDisplayName(profile)}
+                            </h1>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                              {profile.email}
+                            </p>
+                            <p className="text-sm font-semibold text-primary dark:text-primary-light uppercase tracking-wider">
+                              {profile.tagline || profile.headline || ""}
+                            </p>
+                            <p className="text-sm text-body/80 leading-relaxed font-medium mt-2">
+                              {profile.bio || profile.about || "Sharing my journey in the startup ecosystem."}
+                            </p>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap justify-center gap-2">
@@ -1317,9 +1308,6 @@ const StudentProfile = () => {
                         <Badge className="bg-accent/10 text-accent border border-accent/20 rounded-full px-3 py-1 font-bold text-[10px] tracking-widest shadow-sm">
                           {profile.role?.toUpperCase()}
                         </Badge>
-                        {isAvailable && (
-                          <Badge variant="success" className="px-2 py-0.5 text-[8px] animate-pulse">AVAILABLE</Badge>
-                        )}
                       </div>
                     </div>
 
